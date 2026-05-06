@@ -49,41 +49,39 @@ class API:
                 from glucometerutils.drivers import fsprecisionneo
                 
                 # Known Vendor/Product IDs for FreeStyle Precision Neo / Optium Neo
+                # 0x1a74: Abbott, 0x1a61: Abbott Diabetes Care (ADC P2)
                 KNOWN_DEVICES = [
                     (0x1a74, 0x2901), # Standard Precision Neo
-                    (0x1a61, 0x3850), # ADC P2 (Detected on some macOS systems)
+                    (0x1a61, 0x3850), # ADC P2 (Commonly detected on Windows/macOS)
                 ]
                 
-                device_found = False
+                device_info = None
                 for vid, pid in KNOWN_DEVICES:
-                    if hid.enumerate(vid, pid):
-                        device_found = True
+                    enum_results = hid.enumerate(vid, pid)
+                    if enum_results:
+                        device_info = enum_results[0]
                         print(f"Detected Abbott device: VID={hex(vid)}, PID={hex(pid)}")
                         break
                 
-                if not device_found:
+                if not device_info:
                     for d in hid.enumerate():
                         manufacturer = d.get('manufacturer_string', '')
                         if manufacturer and "Abbott" in manufacturer:
-                            device_found = True
-                            print(f"Detected Abbott device by manufacturer: {manufacturer}")
+                            device_info = d
+                            print(f"Detected Abbott device by manufacturer: {manufacturer} (VID={hex(d['vendor_id'])}, PID={hex(d['product_id'])})")
                             break
 
-                if device_found:
+                if device_info:
                     try:
-                        # On macOS, path-based access (e.g. DevSrvsID:...) is very flaky.
-                        # Discovery mode (passing None) is much more reliable.
-                        if platform.system() == 'Darwin':
-                            print("macOS detected: Using discovery mode for HID device.")
-                            driver = fsprecisionneo.Device(None)
-                        else:
-                            # For other platforms, discovery mode is also generally safer
-                            driver = fsprecisionneo.Device(None)
+                        # For Precision Neo (HID), passing None to fsprecisionneo.Device 
+                        # triggers discovery mode which is the most compatible across OSs.
+                        print(f"Attempting to connect to device: {device_info.get('product_string', 'Unknown')}")
+                        driver = fsprecisionneo.Device(None)
 
                         exporter = Exporter(driver)
                         readings = exporter.fetch_all_readings()
                         count = self.storage.save_readings(readings)
-                        return {"message": f"Synced {count} new readings from device."}
+                        return {"message": f"Synced {count} new readings from device ({device_info.get('product_string', 'Neo')})."}
                     except Exception as conn_err:
                         print(f"Device connection/sync failed: {conn_err}")
                         # Fall through to mock if in dev
