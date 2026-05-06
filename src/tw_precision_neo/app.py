@@ -46,6 +46,7 @@ class API:
             # 1. Try to find and sync with a real device
             try:
                 import hid
+                import time
                 from glucometerutils.drivers import fsprecisionneo
                 print("HID and fsprecisionneo modules imported successfully.")
                 
@@ -61,7 +62,7 @@ class API:
                     enum_results = hid.enumerate(vid, pid)
                     if enum_results:
                         device_info = enum_results[0]
-                        print(f"Detected Abbott device: VID={hex(vid)}, PID={hex(pid)}")
+                        print(f"Detected Abbott device: VID={hex(vid)}, PID={hex(pid)}, Path={device_info.get('path')}")
                         break
                 
                 if not device_info:
@@ -74,30 +75,50 @@ class API:
                             break
 
                 if device_info:
-                    try:
-                        # For Precision Neo (HID), passing None to fsprecisionneo.Device 
-                        # triggers discovery mode which is the most compatible across OSs.
-                        print(f"Attempting to connect to device via fsprecisionneo.Device(None)...")
-                        driver = fsprecisionneo.Device(None)
-                        print("Device driver initialized successfully.")
+                    path = device_info['path']
+                    # Some versions of hidapi return bytes for path, others return string
+                    if isinstance(path, bytes):
+                        path = path.decode('ascii', errors='ignore')
 
-                        exporter = Exporter(driver)
-                        print("Fetching readings...")
-                        readings = exporter.fetch_all_readings()
-                        print(f"Fetched {len(readings)} readings.")
-                        count = self.storage.save_readings(readings)
-                        return {"message": f"Synced {count} new readings from device ({device_info.get('product_string', 'Neo')})."}
-                    except Exception as conn_err:
-                        print(f"CRITICAL: Device connection/sync failed: {conn_err}")
-                        import traceback
-                        traceback.print_exc()
-                        # Fall through to mock if in dev
+                    max_retries = 3
+                    for attempt in range(max_retries):
+                        try:
+                            print(f"Connection attempt {attempt + 1}/{max_retries} using path: {path}")
+                            # Wait a bit before connection if it's a retry
+                            if attempt > 0:
+                                time.sleep(1.0)
+                            
+                            driver = fsprecisionneo.Device(path)
+                            print("Device driver initialized successfully.")
+
+                            exporter = Exporter(driver)
+                            print("Fetching readings...")
+                            # Add a tiny delay before first read
+                            time.sleep(0.2)
+                            readings = exporter.fetch_all_readings()
+                            
+                            print(f"Fetched {len(readings)} readings.")
+                            count = self.storage.save_readings(readings)
+                            return {"message": f"Synced {count} new readings from device ({device_info.get('product_string', 'Neo')})."}
+                        
+                        except OSError as os_err:
+                            print(f"Attempt {attempt + 1} failed with OSError: {os_err}")
+                            if "read error" in str(os_err).lower() and attempt < max_retries - 1:
+                                print("Detected 'read error' on Windows. This often means the device is busy or requires exclusive access. Retrying...")
+                                continue
+                            raise # Re-raise if it's the last attempt or not a read error
+                        except Exception as e:
+                            print(f"Attempt {attempt + 1} failed with error: {e}")
+                            if attempt < max_retries - 1:
+                                continue
+                            raise
+
                 else:
                     print("No Abbott device detected during sync attempt.")
             except ImportError as imp_err:
                 print(f"Module Import Error: {imp_err}")
             except Exception as e:
-                print(f"Unexpected error during real device sync: {e}")
+                print(f"CRITICAL: Device connection/sync failed: {e}")
                 import traceback
                 traceback.print_exc()
 
