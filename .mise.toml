@@ -28,10 +28,14 @@ run = ".venv/bin/briefcase dev"
 [tasks.release-mac]
 description = "Package and Notarize the application for macOS release (PKG)"
 run = """
-if [ -z "$DELELOPER_ID_APPLICATION" ]; then
-    .venv/bin/briefcase package macOS -p pkg
+APP_ID="$DEVELOPER_ID_APPLICATION"
+INST_ID="$DEVELOPER_ID_INSTALLER"
+
+if [ -n "$APP_ID" ] && [ -n "$INST_ID" ]; then
+    .venv/bin/briefcase package macOS -p pkg --identity "$APP_ID" --installer-identity "$INST_ID"
 else
-    .venv/bin/briefcase package macOS -p pkg --identity "$DELELOPER_ID_APPLICATION"
+    echo "Developer identities not fully set. Briefcase will show a selection list."
+    .venv/bin/briefcase package macOS -p pkg
 fi
 """
 
