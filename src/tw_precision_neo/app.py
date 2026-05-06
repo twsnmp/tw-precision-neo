@@ -4,6 +4,7 @@ import json
 import pandas as pd
 import platform
 import gc
+import traceback
 from datetime import datetime
 from .exporter import Exporter
 from .storage import SQLiteStorage
@@ -50,13 +51,32 @@ class API:
                 import time
                 from glucometerutils.drivers import fsprecisionneo
                 
-                # --- MONKEY PATCH FOR WINDOWS HIDAPI READ ERROR ---
-                # On Windows, cython-hidapi can throw "OSError: read error" if the requested 
-                # read size is exactly the report size (64) instead of the report size + 1 (65) 
-                # for the Report ID. We monkey patch HidApi.read to request 65 bytes on Windows,
-                # and strip the report ID if it's prepended.
+                # --- MONKEY PATCH FOR WINDOWS HIDAPI ---
+                # On Windows, freestyle-hid incorrectly uses HidRaw (standard file I/O) if a path is provided,
+                # which causes "Permission denied". We patch HidWrapper.open to use HidApi with open_path instead.
+                # Also, cython-hidapi can throw "OSError: read error" if the requested 
+                # read size is exactly the report size (64) instead of the report size + 1 (65).
                 try:
                     import freestyle_hid._hidwrapper
+                    if not hasattr(freestyle_hid._hidwrapper.HidWrapper, '_original_open'):
+                        freestyle_hid._hidwrapper.HidWrapper._original_open = freestyle_hid._hidwrapper.HidWrapper.open
+                        
+                        @staticmethod
+                        def patched_open(device_path, vendor_id, product_id):
+                            if platform.system() == "Windows":
+                                inst = freestyle_hid._hidwrapper.HidApi.__new__(freestyle_hid._hidwrapper.HidApi)
+                                inst._handle = hid.device()
+                                if device_path:
+                                    dp_bytes = str(device_path).encode('utf-8')
+                                    inst._handle.open_path(dp_bytes)
+                                else:
+                                    inst._handle.open(vendor_id, product_id)
+                                return inst
+                            else:
+                                return freestyle_hid._hidwrapper.HidWrapper._original_open(device_path, vendor_id, product_id)
+                                
+                        freestyle_hid._hidwrapper.HidWrapper.open = patched_open
+
                     if not hasattr(freestyle_hid._hidwrapper.HidApi, '_original_read'):
                         freestyle_hid._hidwrapper.HidApi._original_read = freestyle_hid._hidwrapper.HidApi.read
                         
@@ -72,7 +92,7 @@ class API:
                                 return bytes(self._handle.read(size, timeout_ms=0))
                                 
                         freestyle_hid._hidwrapper.HidApi.read = patched_read
-                        print("Applied Windows HidApi.read monkey-patch.")
+                        print("Applied Windows HidWrapper.open and HidApi.read monkey-patches.")
                 except ImportError:
                     pass
                 # ---------------------------------------------------
@@ -86,86 +106,87 @@ class API:
                     (0x1a61, 0x3850), # ADC P2 (Commonly detected on Windows/macOS)
                 ]
                 
-                device_info = None
+                target_paths = []
                 for vid, pid in KNOWN_DEVICES:
                     enum_results = hid.enumerate(vid, pid)
-                    if enum_results:
-                        device_info = enum_results[0]
-                        print(f"Detected Abbott device: VID={hex(vid)}, PID={hex(pid)}, Path={device_info.get('path')}")
-                        break
+                    for d in enum_results:
+                        target_paths.append((d.get('path'), d))
+                        print(f"Detected Abbott device interface: VID={hex(vid)}, PID={hex(pid)}, Path={d.get('path')}")
                 
-                if not device_info:
+                if not target_paths:
                     print("No known device IDs found. Enumerating all HID devices...")
                     for d in hid.enumerate():
                         manufacturer = d.get('manufacturer_string', '')
                         if manufacturer and "Abbott" in manufacturer:
-                            device_info = d
+                            target_paths.append((d.get('path'), d))
                             print(f"Detected Abbott device by manufacturer: {manufacturer} (VID={hex(d['vendor_id'])}, PID={hex(d['product_id'])})")
-                            break
 
-                if device_info:
-                    path = device_info['path']
-                    # Some versions of hidapi return bytes for path, others return string
-                    if isinstance(path, bytes):
-                        path = path.decode('ascii', errors='ignore')
+                if target_paths:
+                    last_error = None
+                    # Try each interface. Some Abbott devices expose multiple HID interfaces
+                    # and only one responds to commands.
+                    for path_bytes, device_info in target_paths:
+                        path = path_bytes
+                        if isinstance(path, bytes):
+                            path = path.decode('ascii', errors='ignore')
 
-                    # On Windows, opening the HID path directly as a file fails with Permission Denied.
-                    # We must pass None to let freestyle-hid use VID/PID via hidapi.
-                    if platform.system() == "Windows":
-                        print(f"Windows detected. Using VID/PID instead of path: {path}")
-                        path = None
-
-                    max_retries = 3
-                    driver = None
-                    for attempt in range(max_retries):
-                        try:
-                            # If we have a lingering driver from a failed attempt, clean it up
-                            if driver:
-                                print("Cleaning up previous driver instance before retry...")
-                                del driver
-                                driver = None
-                                gc.collect()
-                                time.sleep(1.0)
-
-                            print(f"Connection attempt {attempt + 1}/{max_retries} using path: {path}")
-                            # Wait longer before connection if it's a retry
-                            if attempt > 0:
-                                time.sleep(2.0)
-                            
-                            driver = fsprecisionneo.Device(path)
-                            print("Device driver initialized successfully.")
-
-                            exporter = Exporter(driver)
-                            print("Fetching readings...")
-                            # Add a longer delay before first read on Windows
-                            time.sleep(1.0 if platform.system() == "Windows" else 0.2)
-                            readings = exporter.fetch_all_readings()
-                            
-                            print(f"Fetched {len(readings)} readings.")
-                            count = self.storage.save_readings(readings)
-                            return {"message": f"Synced {count} new readings from device ({device_info.get('product_string', 'Neo')})."}
+                        print(f"\n--- Trying interface path: {path} ---")
                         
-                        except OSError as os_err:
-                            print(f"Attempt {attempt + 1} failed with OSError: {os_err}")
-                            if attempt < max_retries - 1:
-                                print("Retrying after OSError (possibly device busy or read error)...")
-                                continue
-                            raise
-                        except Exception as e:
-                            print(f"Attempt {attempt + 1} failed with error: {e}")
-                            if attempt < max_retries - 1:
-                                continue
-                            raise
+                        max_retries = 2
+                        driver = None
+                        for attempt in range(max_retries):
+                            try:
+                                if driver:
+                                    print("Cleaning up previous driver instance before retry...")
+                                    del driver
+                                    driver = None
+                                    gc.collect()
+                                    time.sleep(1.0)
+
+                                print(f"Connection attempt {attempt + 1}/{max_retries} using path: {path}")
+                                if attempt > 0:
+                                    time.sleep(1.5)
+                                
+                                driver = fsprecisionneo.Device(path)
+                                print("Device driver initialized successfully.")
+
+                                exporter = Exporter(driver)
+                                print("Fetching readings...")
+                                time.sleep(0.5)
+                                readings = exporter.fetch_all_readings()
+                                
+                                print(f"Fetched {len(readings)} readings from this interface!")
+                                count = self.storage.save_readings(readings)
+                                return {"message": f"Synced {count} new readings from device ({device_info.get('product_string', 'Neo')})."}
+                            
+                            except OSError as os_err:
+                                print(f"Attempt {attempt + 1} failed with OSError: {os_err}")
+                                last_error = os_err
+                                if attempt < max_retries - 1:
+                                    print("Retrying after OSError...")
+                                    continue
+                            except Exception as e:
+                                print(f"Attempt {attempt + 1} failed with error: {repr(e)}")
+                                last_error = e
+                                if attempt < max_retries - 1:
+                                    continue
+                                
+                        # If we exhausted retries for this interface, clean up and try the next one
+                        if 'driver' in locals() and driver:
+                            del driver
+                            gc.collect()
+
+                    print(f"CRITICAL: Failed to sync on all interfaces. Last error: {last_error}")
+                    import traceback
+                    if last_error:
+                        traceback.print_exception(type(last_error), last_error, last_error.__traceback__)
 
                 else:
                     print("No Abbott device detected during sync attempt.")
             except ImportError as imp_err:
                 print(f"Module Import Error: {imp_err}")
             except Exception as e:
-                print(f"CRITICAL: Device connection/sync failed: {e}")
-                if 'driver' in locals() and driver:
-                    del driver
-                    gc.collect()
+                print(f"CRITICAL: Device connection/sync setup failed: {e}")
                 import traceback
                 traceback.print_exc()
 
