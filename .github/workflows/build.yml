@@ -10,6 +10,10 @@ jobs:
   package-windows:
     name: Package for Windows
     runs-on: windows-latest
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
 
     steps:
       - name: Checkout code
@@ -25,9 +29,18 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install briefcase
 
-      - name: Build and Package
+      - name: Build and Package (MSI)
         run: |
-          briefcase package windows --no-sign --no-input
+          briefcase package windows -p msi --no-input
+
+      - name: Build and Package (ZIP)
+        run: |
+          briefcase package windows -p zip --no-input
+
+      - name: Attest Build Provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'dist/*'
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
