@@ -16,6 +16,29 @@ async function syncDevice() {
     }
 }
 
+async function exportCSV() {
+    if (!readingsTable) return;
+    
+    // Get currently filtered rows from DataTable
+    const visibleData = readingsTable.rows({ search: 'applied' }).data().toArray();
+    
+    if (visibleData.length === 0) {
+        updateStatus('No data to export.');
+        return;
+    }
+
+    updateStatus('Exporting...');
+    setButtonsDisabled(true);
+    try {
+        const result = await pywebview.api.export_csv(visibleData);
+        updateStatus(result.message);
+    } catch (e) {
+        updateStatus('Export Error: ' + e);
+    } finally {
+        setButtonsDisabled(false);
+    }
+}
+
 async function loadData() {
     try {
         const data = await pywebview.api.get_data();
@@ -32,6 +55,8 @@ function updateStatus(msg) {
 
 function setButtonsDisabled(disabled) {
     document.getElementById('sync-btn').disabled = disabled;
+    const exportBtn = document.getElementById('export-btn');
+    if (exportBtn) exportBtn.disabled = disabled;
 }
 
 function updateUI(data) {

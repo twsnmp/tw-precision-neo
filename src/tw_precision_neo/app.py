@@ -107,6 +107,32 @@ class API:
         except Exception as e:
             return {"message": f"Error: {e}"}
 
+    def export_csv(self, data):
+        try:
+            if not data:
+                return {"message": "No data to export."}
+                
+            window = webview.active_window()
+            save_path = window.create_file_dialog(
+                webview.SAVE_DIALOG, 
+                directory=os.path.expanduser("~"), 
+                save_filename="glucose_readings.csv",
+                file_types=("CSV files (*.csv)", "All files (*.*)")
+            )
+            
+            if not save_path:
+                return {"message": "Export cancelled."}
+            
+            # Use the first path if it's a list (some platforms return lists)
+            if isinstance(save_path, (list, tuple)):
+                save_path = save_path[0]
+                
+            df = pd.DataFrame(data)
+            df.to_csv(save_path, index=False)
+            return {"message": f"Successfully exported to {os.path.basename(save_path)}"}
+        except Exception as e:
+            return {"message": f"Export failed: {e}"}
+
 def main():
     # Setup data directory
     if os.name == 'nt':
