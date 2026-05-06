@@ -30,6 +30,6 @@ This plan outlines the transition from a native Toga-based UI to a modern web-ba
 - [x] Local dev run verification.
 - [x] Successful macOS app bundle generation.
 
-### Phase 5: Distribution (Upcoming)
-- [ ] Final packaging for release.
-- [ ] Deployment documentation.
+### Phase 5: Distribution (Completed)
+- [x] Final packaging for release.
+- [x] Deployment documentation.

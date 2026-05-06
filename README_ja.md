@@ -68,12 +68,27 @@ brew install --cask tw-precision-neo
 
 このプロジェクトは、[TWSNMP](https://github.com/twsnmp) の開発者によって維持されている **'tw' シリーズ**の一部です。
 
-開発環境のセットアップ ([mise](https://mise.jdx.dev/) が必要):
+### 開発環境のセットアップ
+[mise](https://mise.jdx.dev/) が必要です：
 ```bash
 mise install
 mise run setup
-mise run dev
 ```
+
+### 開発・ビルドコマンド
+- **開発実行**: `mise run dev`
+- **テスト実行**: `mise run test`
+- **ビルド（ローカル確認用）**: `mise run build`
+
+### リリース・パッケージング
+- **macOS (署名・公証付き)**:
+  セキュリティ保持のため、macOS版の署名は手元のMacで行います。
+  ```bash
+  mise run release-mac
+  ```
+  実行時に Apple Developer ID の入力を求められます。
+- **Windows**:
+  GitHub にプッシュすると **GitHub Actions** が自動的にビルドを開始し、`.msi` インストーラーを生成します。
 
 ## 📄 ライセンス
 

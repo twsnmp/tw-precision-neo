@@ -14,6 +14,9 @@ Create a privacy-first desktop application using `pywebview` to extract blood gl
   - `pandas`: Data analysis.
   - `sqlite3`: Local data persistence.
 - **Packaging:** [Briefcase](https://briefcase.readthedocs.io/) (BeeWare) for macOS/Windows/Linux bundles.
+  - **Release Strategy:**
+    - macOS: Local build with Apple Notarization via `mise run release-mac`.
+    - Windows: Automated builds via GitHub Actions (.msi).
 
 ## Key Features
 - **Web UI:** Modern, responsive interface built with HTML/CSS.

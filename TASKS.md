@@ -27,5 +27,5 @@
 ## Phase 5: Packaging & Distribution
 - [x] Run `briefcase dev` for local verification <!-- id: 12 -->
 - [x] Run `briefcase build` for macOS app bundle <!-- id: 13 -->
-- [ ] Create distribution package: `briefcase package` <!-- id: 14 -->
-- [ ] Document distribution and update flow <!-- id: 15 -->
+- [x] Create distribution package: `briefcase package` <!-- id: 14 -->
+- [x] Document distribution and update flow <!-- id: 15 -->

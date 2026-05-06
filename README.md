@@ -64,16 +64,31 @@ brew install --cask tw-precision-neo
 **本ソフトウェアは「プログラム医療機器（SaMD）」ではありません。**
 個人のログ管理および情報参照のみを目的としています。本ソフトが提供する情報を、インスリン投与量の調整など治療に関する決定に使用しないでください。治療に関する決定は、必ず主治医の診断と指導に基づいて行ってください。
 
-## 🛠 開発者向け
+## 🛠 For Developers
 
-このプロジェクトは、[TWSNMP](https://github.com/twsnmp) の開発者によって維持されている **'tw' シリーズ**の一部です。
+This project is part of the **'tw' series** maintained by the developer of [TWSNMP](https://github.com/twsnmp).
 
-開発環境のセットアップ ([mise](https://mise.jdx.dev/) が必要):
+### Development Environment Setup
+Requires [mise](https://mise.jdx.dev/):
 ```bash
 mise install
 mise run setup
-mise run dev
 ```
+
+### Commands
+- **Run in Dev Mode**: `mise run dev`
+- **Run Tests**: `mise run test`
+- **Build (Local Verification)**: `mise run build`
+
+### Release & Packaging
+- **macOS (Signed & Notarized)**:
+  For security, code signing is performed locally on your Mac.
+  ```bash
+  mise run release-mac
+  ```
+  You will be prompted to enter your Apple Developer ID.
+- **Windows**:
+  Pushing to GitHub triggers **GitHub Actions**, which automatically builds and generates the `.msi` installer.
 
 ## 📄 ライセンス
 

@@ -147,26 +147,29 @@ def main():
     api = API(storage)
     
     # Path to assets - checking multiple locations for flexibility
-    # 1. assets/ folder in the project root (development)
-    # 2. resources/ folder if packaged
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # src/
-    project_root = os.path.dirname(base_dir)
+    # 1. src/tw_precision_neo/assets/ (Preferred for both Dev and Prod now)
+    # 2. assets/ folder in the project root (Old development layout)
+    
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(current_dir))
     
     locations = [
+        os.path.join(current_dir, "assets", "index.html"),
         os.path.join(project_root, "assets", "index.html"),
-        os.path.join(os.path.dirname(__file__), "assets", "index.html"),
-        "assets/index.html"
     ]
     
     index_path = None
     for loc in locations:
         if os.path.exists(loc):
             index_path = loc
+            print(f"Found assets at: {index_path}")
             break
             
     if not index_path:
-        # Emergency fallback or error
-        print("Warning: index.html not found!")
+        print("Error: index.html not found in searched locations:")
+        for loc in locations:
+            print(f"  - {loc}")
+        # Last resort fallback (might fail if CWD is wrong)
         index_path = "assets/index.html"
     
     window = webview.create_window(
