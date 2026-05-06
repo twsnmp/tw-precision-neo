@@ -47,6 +47,7 @@ class API:
             try:
                 import hid
                 from glucometerutils.drivers import fsprecisionneo
+                print("HID and fsprecisionneo modules imported successfully.")
                 
                 # Known Vendor/Product IDs for FreeStyle Precision Neo / Optium Neo
                 # 0x1a74: Abbott, 0x1a61: Abbott Diabetes Care (ADC P2)
@@ -64,6 +65,7 @@ class API:
                         break
                 
                 if not device_info:
+                    print("No known device IDs found. Enumerating all HID devices...")
                     for d in hid.enumerate():
                         manufacturer = d.get('manufacturer_string', '')
                         if manufacturer and "Abbott" in manufacturer:
@@ -75,18 +77,29 @@ class API:
                     try:
                         # For Precision Neo (HID), passing None to fsprecisionneo.Device 
                         # triggers discovery mode which is the most compatible across OSs.
-                        print(f"Attempting to connect to device: {device_info.get('product_string', 'Unknown')}")
+                        print(f"Attempting to connect to device via fsprecisionneo.Device(None)...")
                         driver = fsprecisionneo.Device(None)
+                        print("Device driver initialized successfully.")
 
                         exporter = Exporter(driver)
+                        print("Fetching readings...")
                         readings = exporter.fetch_all_readings()
+                        print(f"Fetched {len(readings)} readings.")
                         count = self.storage.save_readings(readings)
                         return {"message": f"Synced {count} new readings from device ({device_info.get('product_string', 'Neo')})."}
                     except Exception as conn_err:
-                        print(f"Device connection/sync failed: {conn_err}")
+                        print(f"CRITICAL: Device connection/sync failed: {conn_err}")
+                        import traceback
+                        traceback.print_exc()
                         # Fall through to mock if in dev
-            except (ImportError, Exception) as e:
-                print(f"Real device sync skipped or failed: {e}")
+                else:
+                    print("No Abbott device detected during sync attempt.")
+            except ImportError as imp_err:
+                print(f"Module Import Error: {imp_err}")
+            except Exception as e:
+                print(f"Unexpected error during real device sync: {e}")
+                import traceback
+                traceback.print_exc()
 
             # 2. Fallback to mock if available
             if HAS_MOCK:
