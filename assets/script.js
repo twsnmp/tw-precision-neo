@@ -2,8 +2,109 @@ let glucoseChart = null;
 let readingsTable = null;
 let allReadings = []; // Global store for original data
 
+const translations = {
+    en: {
+        sync_btn: "Sync Device",
+        export_btn: "Export CSV",
+        status_ready: "Ready",
+        status_syncing: "Syncing...",
+        status_exporting: "Exporting...",
+        status_no_data: "No data to export.",
+        chart_title: "Glucose Trends",
+        table_title: "All Readings",
+        th_timestamp: "Timestamp",
+        th_value: "Value",
+        th_unit: "Unit",
+        search_placeholder: "Filter...",
+        range_low: "Low",
+        range_target: "In Target",
+        range_caution: "Caution",
+        range_high: "High",
+        range_very_high: "Very High",
+        range_unknown: "Unknown",
+        series_name: "Glucose Level"
+    },
+    ja: {
+        sync_btn: "デバイス同期",
+        export_btn: "CSV出力",
+        status_ready: "準備完了",
+        status_syncing: "同期中...",
+        status_exporting: "出力中...",
+        status_no_data: "出力するデータがありません。",
+        chart_title: "血糖値トレンド",
+        table_title: "全測定データ",
+        th_timestamp: "日時",
+        th_value: "数値",
+        th_unit: "単位",
+        search_placeholder: "フィルタ...",
+        range_low: "低血糖",
+        range_target: "目標範囲内",
+        range_caution: "高め (注意)",
+        range_high: "高血糖",
+        range_very_high: "非常に高い",
+        range_unknown: "不明",
+        series_name: "血糖値"
+    }
+};
+
+let currentLanguage = 'en';
+
+function changeLanguage(lang) {
+    currentLanguage = lang;
+    const selector = document.getElementById('language-selector');
+    if (selector) selector.value = lang;
+    updateStaticText();
+    
+    // If table exists, we need to re-initialize it to update search placeholder and headers
+    if (readingsTable) {
+        readingsTable.destroy();
+        readingsTable = null;
+    }
+    
+    if (allReadings.length > 0) {
+        updateUI({ readings: allReadings });
+    } else {
+        // Just refresh table headers if empty
+        updateTable([]);
+    }
+}
+
+function updateStaticText() {
+    const t = translations[currentLanguage];
+    const syncBtn = document.getElementById('sync-btn');
+    if (syncBtn) syncBtn.innerText = t.sync_btn;
+    
+    const exportBtn = document.getElementById('export-btn');
+    if (exportBtn) exportBtn.innerText = t.export_btn;
+    
+    const chartTitle = document.getElementById('chart-title');
+    if (chartTitle) chartTitle.innerText = t.chart_title;
+    
+    const tableTitle = document.getElementById('table-title');
+    if (tableTitle) tableTitle.innerText = t.table_title;
+    
+    const thTimestamp = document.getElementById('th-timestamp');
+    if (thTimestamp) thTimestamp.innerText = t.th_timestamp;
+    
+    const thValue = document.getElementById('th-value');
+    if (thValue) thValue.innerText = t.th_value;
+    
+    const thUnit = document.getElementById('th-unit');
+    if (thUnit) thUnit.innerText = t.th_unit;
+    
+    const statusEl = document.getElementById('status');
+    if (statusEl) {
+        // Simple way to handle initial/ready state
+        if (statusEl.innerText === translations.en.status_ready || 
+            statusEl.innerText === translations.ja.status_ready ||
+            statusEl.innerText === "Ready") {
+            statusEl.innerText = t.status_ready;
+        }
+    }
+}
+
 async function syncDevice() {
-    updateStatus('Syncing...');
+    updateStatus(translations[currentLanguage].status_syncing);
     setButtonsDisabled(true);
     try {
         const result = await pywebview.api.sync_device();
@@ -19,15 +120,14 @@ async function syncDevice() {
 async function exportCSV() {
     if (!readingsTable) return;
     
-    // Get currently filtered rows from DataTable
     const visibleData = readingsTable.rows({ search: 'applied' }).data().toArray();
     
     if (visibleData.length === 0) {
-        updateStatus('No data to export.');
+        updateStatus(translations[currentLanguage].status_no_data);
         return;
     }
 
-    updateStatus('Exporting...');
+    updateStatus(translations[currentLanguage].status_exporting);
     setButtonsDisabled(true);
     try {
         const result = await pywebview.api.export_csv(visibleData);
@@ -42,7 +142,7 @@ async function exportCSV() {
 async function loadData() {
     try {
         const data = await pywebview.api.get_data();
-        allReadings = data.readings || []; // Store for filtering
+        allReadings = data.readings || [];
         updateUI(data);
     } catch (e) {
         console.error('Failed to load data:', e);
@@ -50,11 +150,13 @@ async function loadData() {
 }
 
 function updateStatus(msg) {
-    document.getElementById('status').innerText = msg;
+    const statusEl = document.getElementById('status');
+    if (statusEl) statusEl.innerText = msg;
 }
 
 function setButtonsDisabled(disabled) {
-    document.getElementById('sync-btn').disabled = disabled;
+    const syncBtn = document.getElementById('sync-btn');
+    if (syncBtn) syncBtn.disabled = disabled;
     const exportBtn = document.getElementById('export-btn');
     if (exportBtn) exportBtn.disabled = disabled;
 }
@@ -78,7 +180,6 @@ function getGlucoseRange(value, unit) {
         if (value <= 13.9) return 'high';
         return 'very-high';
     } else {
-        // mg/dL
         if (value < 70) return 'low';
         if (value <= 140) return 'target';
         if (value <= 180) return 'caution';
@@ -88,29 +189,31 @@ function getGlucoseRange(value, unit) {
 }
 
 function getRangeLabel(range) {
+    const t = translations[currentLanguage];
     switch(range) {
-        case 'low': return '低血糖';
-        case 'target': return '目標範囲内';
-        case 'caution': return '高め (注意)';
-        case 'high': return '高血糖';
-        case 'very-high': return '非常に高い';
-        default: return '不明';
+        case 'low': return t.range_low;
+        case 'target': return t.range_target;
+        case 'caution': return t.range_caution;
+        case 'high': return t.range_high;
+        case 'very-high': return t.range_very_high;
+        default: return t.range_unknown;
     }
 }
 
 function getRangeColor(range) {
     switch(range) {
-        case 'low': return '#ef4444';       // Red
-        case 'target': return '#22c55e';    // Green
-        case 'caution': return '#f59e0b';   // Orange/Yellow
-        case 'high': return '#ef4444';      // Red
-        case 'very-high': return '#991b1b'; // Dark Red
+        case 'low': return '#ef4444';
+        case 'target': return '#22c55e';
+        case 'caution': return '#f59e0b';
+        case 'high': return '#ef4444';
+        case 'very-high': return '#991b1b';
         default: return '#e4e1e5';
     }
 }
 
 function updateTable(readings) {
     const pageLength = getAppropriatePageLength();
+    const t = translations[currentLanguage];
     
     if (!readingsTable) {
         readingsTable = $('#readings-table').DataTable({
@@ -137,7 +240,7 @@ function updateTable(readings) {
             dom: 'ftp', 
             language: {
                 search: "",
-                searchPlaceholder: "フィルタ..."
+                searchPlaceholder: t.search_placeholder
             }
         });
     } else {
@@ -146,13 +249,15 @@ function updateTable(readings) {
 }
 
 function renderChart(readings) {
+    const t = translations[currentLanguage];
     if (!glucoseChart) {
-        glucoseChart = echarts.init(document.getElementById('glucoseChart'), 'dark', { renderer: 'canvas' });
+        const chartEl = document.getElementById('glucoseChart');
+        if (!chartEl) return;
+        glucoseChart = echarts.init(chartEl, 'dark', { renderer: 'canvas' });
         
-        // Listen for dataZoom events to filter the table
         glucoseChart.on('dataZoom', function () {
             const axis = glucoseChart.getModel().getComponent('xAxis', 0).axis;
-            const range = axis.scale.getExtent(); // [minTimestamp, maxTimestamp]
+            const range = axis.scale.getExtent();
             
             const filtered = allReadings.filter(r => {
                 const t = new Date(r.timestamp).getTime();
@@ -172,11 +277,11 @@ function renderChart(readings) {
         { low: 70, target: 140, caution: 180, high: 250 };
 
     const pieces = [
-        { gt: 0, lte: thresholds.low, color: '#ef4444' },               // Low: Red
-        { gt: thresholds.low, lte: thresholds.target, color: '#22c55e' }, // Target: Green
-        { gt: thresholds.target, lte: thresholds.caution, color: '#f59e0b' }, // Caution: Orange
-        { gt: thresholds.caution, lte: thresholds.high, color: '#ef4444' }, // High: Red
-        { gt: thresholds.high, color: '#991b1b' }                      // Very High: Dark Red
+        { gt: 0, lte: thresholds.low, color: '#ef4444' },
+        { gt: thresholds.low, lte: thresholds.target, color: '#22c55e' },
+        { gt: thresholds.target, lte: thresholds.caution, color: '#f59e0b' },
+        { gt: thresholds.caution, lte: thresholds.high, color: '#ef4444' },
+        { gt: thresholds.high, color: '#991b1b' }
     ];
 
     const option = {
@@ -232,7 +337,7 @@ function renderChart(readings) {
         ],
         series: [
             {
-                name: '血糖値',
+                name: t.series_name,
                 type: 'line',
                 smooth: true,
                 symbol: 'none',
@@ -256,7 +361,6 @@ function renderChart(readings) {
     };
 
     glucoseChart.setOption(option);
-    // Explicitly trigger resize after setting options to ensure flex container size is picked up
     setTimeout(() => {
         if (glucoseChart) glucoseChart.resize();
     }, 0);
@@ -273,5 +377,12 @@ window.addEventListener('resize', () => {
 });
 
 window.addEventListener('pywebviewready', () => {
+    // Detect language
+    const userLang = navigator.language || navigator.userLanguage;
+    if (userLang.startsWith('ja')) {
+        changeLanguage('ja');
+    } else {
+        changeLanguage('en');
+    }
     loadData();
 });

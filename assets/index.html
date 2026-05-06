@@ -14,6 +14,10 @@
     <header>
         <h1>TW Precision Neo Analyst</h1>
         <div class="controls">
+            <select id="language-selector" onchange="changeLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+            </select>
             <button id="sync-btn" onclick="syncDevice()">Sync Device</button>
             <button id="export-btn" onclick="exportCSV()">Export CSV</button>
             <span id="status">Ready</span>
@@ -23,19 +27,19 @@
     <main>
         <section class="dashboard">
             <div class="card chart-card">
-                <h2>Glucose Trends</h2>
+                <h2 id="chart-title">Glucose Trends</h2>
                 <div id="glucoseChart"></div>
             </div>
         </section>
 
         <section class="data-list">
-            <h2>All Readings</h2>
+            <h2 id="table-title">All Readings</h2>
             <table id="readings-table" class="display nowrap" style="width:100%">
                 <thead>
                     <tr>
-                        <th>Timestamp</th>
-                        <th>Value</th>
-                        <th>Unit</th>
+                        <th id="th-timestamp">Timestamp</th>
+                        <th id="th-value">Value</th>
+                        <th id="th-unit">Unit</th>
                     </tr>
                 </thead>
                 <tbody>
