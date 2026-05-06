@@ -15,20 +15,6 @@ async function syncDevice() {
     }
 }
 
-async function importCSV() {
-    updateStatus('Importing CSV...');
-    setButtonsDisabled(true);
-    try {
-        const result = await pywebview.api.import_csv();
-        updateStatus(result.message);
-        loadData();
-    } catch (e) {
-        updateStatus('Error: ' + e);
-    } finally {
-        setButtonsDisabled(false);
-    }
-}
-
 async function loadData() {
     try {
         const data = await pywebview.api.get_data();
@@ -44,7 +30,6 @@ function updateStatus(msg) {
 
 function setButtonsDisabled(disabled) {
     document.getElementById('sync-btn').disabled = disabled;
-    document.getElementById('import-btn').disabled = disabled;
 }
 
 function updateUI(data) {

@@ -17,7 +17,7 @@
 - [x] Implement Python API bridge in `app.py` <!-- id: 8 -->
 - [x] Build HTML/CSS dashboard in `assets/` <!-- id: 9 -->
 - [x] Integrate Chart.js for trend visualization <!-- id: 10 -->
-- [x] Implement Sync and CSV Import logic <!-- id: 11 -->
+- [x] Implement Sync logic (CSV Import removed) <!-- id: 11 -->
 
 ## Phase 4: Performance Optimization
 - [x] Optimize SQLite storage with `executemany` <!-- id: 16 -->

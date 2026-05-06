@@ -107,26 +107,6 @@ class API:
         except Exception as e:
             return {"message": f"Error: {e}"}
 
-    def import_csv(self):
-        try:
-            # Determine project root relative to this file
-            # In package mode, we expect assets to be sibling or sub-dir
-            app_dir = os.getcwd() # Fallback for dev
-            csv_path = os.path.join(app_dir, "readings.csv")
-            
-            if os.path.exists(csv_path):
-                df = pd.read_csv(csv_path)
-                df['timestamp'] = pd.to_datetime(df['timestamp'])
-                if 'type' not in df.columns:
-                    df['type'] = 'Glucose'
-                readings = df.to_dict('records')
-                count = self.storage.save_readings(readings)
-                return {"message": f"Imported {count} readings."}
-            else:
-                return {"message": f"Error: readings.csv not found at {csv_path}"}
-        except Exception as e:
-            return {"message": f"Error: {e}"}
-
 def main():
     # Setup data directory
     if os.name == 'nt':

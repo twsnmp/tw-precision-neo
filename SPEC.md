@@ -19,7 +19,9 @@ Create a privacy-first desktop application using `pywebview` to extract blood gl
 - **Web UI:** Modern, responsive interface built with HTML/CSS.
 - **Interactive Dashboards:** Zoomable, hoverable charts for glucose trends using Chart.js.
 - **Local API:** Python backend serving data to the frontend via pywebview's JS bridge.
-- **Privacy First:** Strictly local storage in SQLite; no cloud sync.
+- **Privacy First:** Strictly local storage in SQLite; no cloud sync. Data is stored at:
+  - macOS: `~/Library/Application Support/tw_precision_neo/tw_precision_neo.db`
+  - Windows: `%LOCALAPPDATA%\tw_precision_neo\tw_precision_neo.db`
 
 ## Success Criteria
 - [x] Successfully boots a `pywebview` window showing a local HTML dashboard.

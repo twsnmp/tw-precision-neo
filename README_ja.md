@@ -48,6 +48,13 @@ brew install --cask tw-precision-neo
 2.  **同期**: アプリを起動し、**"Sync Device"** ボタンをクリックします。
 3.  **分析**: 取得されたデータと推移グラフをすぐに確認できます。
 
+## 💾 データの保存場所
+
+すべてのデータは、お使いの PC 内のローカル SQLite データベースに保存されます。ファイルは以下の場所にあります：
+
+- **macOS**: `~/Library/Application Support/tw_precision_neo/tw_precision_neo.db`
+- **Windows**: `%LOCALAPPDATA%\tw_precision_neo\tw_precision_neo.db`
+
 ## 📸 スクリーンショット
 
 *(プレースホルダー: ここにダッシュボードのスクリーンショットを追加)*
