@@ -80,6 +80,12 @@ class API:
                     if isinstance(path, bytes):
                         path = path.decode('ascii', errors='ignore')
 
+                    # On Windows, opening the HID path directly as a file fails with Permission Denied.
+                    # We must pass None to let freestyle-hid use VID/PID via hidapi.
+                    if platform.system() == "Windows":
+                        print(f"Windows detected. Using VID/PID instead of path: {path}")
+                        path = None
+
                     max_retries = 3
                     for attempt in range(max_retries):
                         try:
