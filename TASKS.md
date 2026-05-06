@@ -3,7 +3,7 @@
 ## Phase 1: Project Setup
 - [x] Install BeeWare / Briefcase: `pip install briefcase` <!-- id: 0 -->
 - [x] Initialize new project: `briefcase new` <!-- id: 1 -->
-- [x] Port mock driver to `tests/mock_driver.py` <!-- id: 2 -->
+- [x] Port mock driver to `src/tw_precision_neo/mock_driver.py` (included in package) <!-- id: 2 -->
 - [x] Configure `pyproject.toml` and `requirements.txt` with dependencies <!-- id: 3 -->
 - [x] Setup environment manager with `mise` (Python 3.14) <!-- id: 20 -->
 
@@ -29,3 +29,4 @@
 - [x] Run `briefcase build` for macOS app bundle <!-- id: 13 -->
 - [x] Create distribution package: `briefcase package` <!-- id: 14 -->
 - [x] Document distribution and update flow <!-- id: 15 -->
+- [x] Implement Windows CI/CD workflow with ZIP and Attestations <!-- id: 21 -->

@@ -29,11 +29,16 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install briefcase
 
-      - name: Build and Package (MSI)
+      - name: Create and Build App
+        run: |
+          briefcase create windows --no-input
+          briefcase build windows --no-input
+
+      - name: Package (MSI)
         run: |
           briefcase package windows -p msi --no-input
 
-      - name: Build and Package (ZIP)
+      - name: Package (ZIP)
         run: |
           briefcase package windows -p zip --no-input
 

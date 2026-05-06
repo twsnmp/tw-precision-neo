@@ -167,6 +167,8 @@ flatpak_sdk = "org.gnome.Sdk"
 [tool.briefcase.app.tw_precision_neo.windows]
 requires = [
     "toga-winforms~=0.5.0",
+    "cython",
+    "setuptools",
 ]
 
 # Mobile deployments

@@ -10,14 +10,10 @@ from .analysis import AnalysisEngine
 
 # Check for mock
 try:
-    from tests.mock_driver import MockDriver
+    from .mock_driver import MockDriver
     HAS_MOCK = True
 except ImportError:
-    try:
-        from .mock_driver import MockDriver # fallback if moved or in some environments
-        HAS_MOCK = True
-    except ImportError:
-        HAS_MOCK = False
+    HAS_MOCK = False
 
 class API:
     def __init__(self, storage):
