@@ -2,6 +2,7 @@ import webview
 import os
 import json
 import pandas as pd
+import platform
 from datetime import datetime
 from .exporter import Exporter
 from .storage import SQLiteStorage
@@ -12,7 +13,11 @@ try:
     from tests.mock_driver import MockDriver
     HAS_MOCK = True
 except ImportError:
-    HAS_MOCK = False
+    try:
+        from .mock_driver import MockDriver # fallback if moved or in some environments
+        HAS_MOCK = True
+    except ImportError:
+        HAS_MOCK = False
 
 class API:
     def __init__(self, storage):
@@ -42,14 +47,63 @@ class API:
 
     def sync_device(self):
         try:
+            # 1. Try to find and sync with a real device
+            try:
+                import hid
+                from glucometerutils.drivers import fsprecisionneo
+                
+                # Known Vendor/Product IDs for FreeStyle Precision Neo / Optium Neo
+                KNOWN_DEVICES = [
+                    (0x1a74, 0x2901), # Standard Precision Neo
+                    (0x1a61, 0x3850), # ADC P2 (Detected on some macOS systems)
+                ]
+                
+                device_found = False
+                for vid, pid in KNOWN_DEVICES:
+                    if hid.enumerate(vid, pid):
+                        device_found = True
+                        print(f"Detected Abbott device: VID={hex(vid)}, PID={hex(pid)}")
+                        break
+                
+                if not device_found:
+                    for d in hid.enumerate():
+                        manufacturer = d.get('manufacturer_string', '')
+                        if manufacturer and "Abbott" in manufacturer:
+                            device_found = True
+                            print(f"Detected Abbott device by manufacturer: {manufacturer}")
+                            break
+
+                if device_found:
+                    try:
+                        # On macOS, path-based access (e.g. DevSrvsID:...) is very flaky.
+                        # Discovery mode (passing None) is much more reliable.
+                        if platform.system() == 'Darwin':
+                            print("macOS detected: Using discovery mode for HID device.")
+                            driver = fsprecisionneo.Device(None)
+                        else:
+                            # For other platforms, discovery mode is also generally safer
+                            driver = fsprecisionneo.Device(None)
+
+                        exporter = Exporter(driver)
+                        readings = exporter.fetch_all_readings()
+                        count = self.storage.save_readings(readings)
+                        return {"message": f"Synced {count} new readings from device."}
+                    except Exception as conn_err:
+                        print(f"Device connection/sync failed: {conn_err}")
+                        # Fall through to mock if in dev
+            except (ImportError, Exception) as e:
+                print(f"Real device sync skipped or failed: {e}")
+
+            # 2. Fallback to mock if available
             if HAS_MOCK:
+                print("Falling back to Mock readings...")
                 driver = MockDriver()
                 exporter = Exporter(driver)
                 readings = exporter.fetch_all_readings()
                 count = self.storage.save_readings(readings)
-                return {"message": f"Synced {count} new readings."}
+                return {"message": f"Synced {count} new readings (Mock)."}
             else:
-                return {"message": "Error: Device not found."}
+                return {"message": "Error: Device not found. Please ensure your FreeStyle Precision Neo is connected and try again."}
         except Exception as e:
             return {"message": f"Error: {e}"}
 

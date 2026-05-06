@@ -2,7 +2,7 @@
 python = "3.14"
 
 [env]
-PYTHONPATH = "src"
+PYTHONPATH = "src:."
 
 [tasks.setup]
 description = "Setup development environment"
