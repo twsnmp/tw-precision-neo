@@ -7,178 +7,155 @@
     --text-color: #e4e1e5;
     --text-secondary: #c8c5ca;
     --accent-success: #22c55e;
-    --radius-lg: 8px;
+    --radius-lg: 4px;
     --radius-md: 4px;
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 }
 
-body {
-    font-family: var(--font-sans);
+html, body {
+    height: 100%;
     margin: 0;
     padding: 0;
+    overflow: hidden; /* Prevent body scroll */
+}
+
+body {
+    font-family: var(--font-sans);
     background-color: var(--bg-color);
     color: var(--text-color);
-    line-height: 1.6;
+    line-height: 1.2;
     -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
 }
 
 header {
     background-color: var(--surface-color);
-    padding: 1rem 2rem;
+    padding: 0.25rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    flex-shrink: 0;
 }
 
 h1 { 
     margin: 0; 
-    font-size: 1.25rem; 
+    font-size: 1rem; 
     font-weight: 600;
-    letter-spacing: -0.01em;
-    color: var(--text-color);
 }
 
-.controls { display: flex; gap: 0.75rem; align-items: center; }
+.controls { display: flex; gap: 0.5rem; align-items: center; }
 
 button {
     background: var(--primary-color);
     color: #ffffff;
     border: 1px solid transparent;
-    padding: 0.5rem 1rem;
+    padding: 0.25rem 0.6rem;
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: background-color 0.2s, border-color 0.2s;
-}
-
-button:hover {
-    background-color: #2563eb;
-}
-
-button:active {
-    background-color: #1d4ed8;
-}
-
-button:disabled { 
-    background: var(--border-color); 
-    color: var(--text-secondary);
-    cursor: not-allowed; 
-}
-
-#sync-btn {
-    background: var(--primary-color);
-}
-
-#import-btn {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
-}
-
-#import-btn:hover {
-    background: var(--border-color);
+    font-size: 0.75rem;
 }
 
 #status {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     color: var(--text-secondary);
     background: var(--bg-color);
-    padding: 0.25rem 0.75rem;
+    padding: 0.1rem 0.5rem;
     border-radius: 9999px;
     border: 1px solid var(--border-color);
-    font-family: var(--font-mono);
 }
 
 main { 
-    padding: 2rem; 
-    max-width: 1200px; 
-    margin: 0 auto; 
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+    gap: 0.75rem;
+    min-height: 0;
 }
 
 .dashboard {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    flex: 1; /* Chart takes remaining space */
+    min-height: 200px;
+    display: flex;
 }
 
-.card {
+.chart-card {
+    flex: 1;
     background: var(--surface-color);
-    padding: 1.5rem;
+    padding: 0.75rem;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
 }
 
-.card h2 { 
-    margin-top: 0; 
-    font-size: 0.75rem; 
+.chart-card h2 { 
+    margin: 0 0 0.5rem 0;
+    font-size: 0.7rem; 
     text-transform: uppercase;
-    letter-spacing: 0.05em;
     color: var(--text-secondary); 
-    margin-bottom: 1rem;
-    font-weight: 600;
 }
 
-#tir-value { 
-    font-size: 3rem; 
-    font-weight: 700; 
-    color: var(--accent-success);
-    font-family: var(--font-mono);
-}
-
-.chart-container { 
-    height: 350px; 
+#glucoseChart {
+    flex: 1;
+    min-height: 0;
 }
 
 .data-list {
+    flex-shrink: 0; /* Table has fixed content size */
     background: var(--surface-color);
-    padding: 1.5rem;
+    padding: 0.75rem;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
 }
 
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
 .data-list h2 {
-    margin-top: 0;
-    font-size: 0.875rem;
-    color: var(--text-color);
-    margin-bottom: 1.25rem;
-    font-weight: 600;
-}
-
-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    margin-top: 0; 
-}
-
-th { 
-    text-align: left; 
-    padding: 0.75rem 1rem; 
-    color: var(--text-secondary); 
-    font-weight: 500; 
+    margin: 0;
     font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
 }
 
-td { 
-    padding: 0.875rem 1rem; 
-    border-bottom: 1px solid var(--border-color);
-    font-size: 0.875rem;
+/* DataTables Overrides */
+.dataTables_wrapper .dataTables_filter {
+    float: none !important;
+    text-align: right !important;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: var(--radius-md);
+    padding: 0.1rem 0.4rem;
+    font-size: 0.7rem;
+}
+
+table.dataTable thead th {
+    border-bottom: 1px solid var(--border-color) !important;
+    color: var(--text-secondary) !important;
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.7rem;
+}
+
+table.dataTable tbody td {
+    border-bottom: 1px solid var(--border-color) !important;
+    color: var(--text-color) !important;
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.75rem;
     font-family: var(--font-mono);
 }
 
-tr:last-child td {
-    border-bottom: none;
-}
-
-tr:hover td {
-    background: rgba(255, 255, 255, 0.02);
+.dataTables_wrapper .dataTables_paginate {
+    padding-top: 0.4rem;
+    font-size: 0.7rem;
 }

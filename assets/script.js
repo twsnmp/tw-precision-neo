@@ -1,4 +1,5 @@
 let glucoseChart = null;
+let readingsTable = null;
 
 async function syncDevice() {
     updateStatus('Syncing...');
@@ -47,100 +48,116 @@ function setButtonsDisabled(disabled) {
 }
 
 function updateUI(data) {
-    // Update TIR
-    document.getElementById('tir-value').innerText = data.tir.in_range.toFixed(1) + '%';
-    
-    // Update Table
-    const tbody = document.querySelector('#readings-table tbody');
-    tbody.innerHTML = '';
-    data.readings.slice(-10).reverse().forEach(r => {
-        const row = `<tr><td>${r.timestamp}</td><td>${r.value.toFixed(1)}</td><td>${r.unit}</td></tr>`;
-        tbody.innerHTML += row;
-    });
-
-    // Update Chart
+    updateTable(data.readings);
     renderChart(data.readings);
 }
 
-function renderChart(readings) {
-    const ctx = document.getElementById('glucoseChart').getContext('2d');
-    
-    if (glucoseChart) {
-        glucoseChart.destroy();
-    }
-
-    glucoseChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: readings.map(r => r.timestamp),
-            datasets: [{
-                label: 'Blood Glucose',
-                data: readings.map(r => r.value),
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                fill: true,
-                tension: 0.2, // Clinical: less smooth, more precise
-                pointRadius: 0,
-                pointHoverRadius: 4,
-                pointHoverBackgroundColor: '#3b82f6',
-                pointHoverBorderColor: '#fff',
-                pointHoverBorderWidth: 2,
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false,
-            },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    title: { 
-                        display: true, 
-                        text: 'mg/dL',
-                        color: '#c8c5ca',
-                        font: { family: 'Inter', size: 11, weight: '600' }
-                    },
-                    grid: {
-                        color: '#18181b', // Match surface color for grid
-                        drawBorder: false
-                    },
-                    ticks: {
-                        color: '#c8c5ca',
-                        font: { family: 'monospace', size: 11 },
-                        padding: 8
-                    }
-                },
-                x: {
-                    display: false,
-                    grid: { display: false }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: '#18181b',
-                    titleColor: '#e4e1e5',
-                    bodyColor: '#e4e1e5',
-                    borderColor: '#27272a',
-                    borderWidth: 1,
-                    cornerRadius: 4,
-                    padding: 10,
-                    titleFont: { family: 'Inter', size: 12 },
-                    bodyFont: { family: 'monospace', size: 12 },
-                    usePointStyle: true
-                }
-            }
-        }
-    });
+function getAppropriatePageLength() {
+    const windowHeight = window.innerHeight;
+    return windowHeight < 700 ? 5 : 10;
 }
 
-// Initial load
+function updateTable(readings) {
+    const pageLength = getAppropriatePageLength();
+    
+    if (!readingsTable) {
+        readingsTable = $('#readings-table').DataTable({
+            data: readings,
+            columns: [
+                { data: 'timestamp' },
+                { data: 'value', render: (data) => data.toFixed(1) },
+                { data: 'unit' }
+            ],
+            order: [[0, 'desc']],
+            pageLength: pageLength,
+            dom: 'ftp', 
+            language: {
+                search: "",
+                searchPlaceholder: "Filter..."
+            }
+        });
+    } else {
+        readingsTable.clear().rows.add(readings).page.len(pageLength).draw();
+    }
+}
+
+function renderChart(readings) {
+    if (!glucoseChart) {
+        glucoseChart = echarts.init(document.getElementById('glucoseChart'), 'dark', { renderer: 'canvas' });
+    }
+
+    const chartData = readings.map(r => [new Date(r.timestamp), r.value]);
+
+    const option = {
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'axis' },
+        grid: {
+            left: 45,
+            right: 20,
+            bottom: 60, 
+            top: 15,
+            containLabel: false
+        },
+        xAxis: {
+            type: 'time',
+            boundaryGap: false,
+            axisLine: { lineStyle: { color: '#27272a' } },
+            splitLine: { show: false }
+        },
+        yAxis: {
+            type: 'value',
+            scale: true,
+            axisLine: { lineStyle: { color: '#27272a' } },
+            splitLine: { lineStyle: { color: '#18181b' } }
+        },
+        dataZoom: [
+            { type: 'inside', start: 0, end: 100 },
+            {
+                show: true,
+                height: 20,
+                bottom: 5,
+                start: 0,
+                end: 100,
+                borderColor: '#27272a',
+                fillerColor: 'rgba(59, 130, 246, 0.1)',
+                handleStyle: { color: '#3b82f6' }
+            }
+        ],
+        series: [
+            {
+                name: 'Blood Glucose',
+                type: 'line',
+                smooth: true,
+                symbol: 'none',
+                areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: 'rgba(59, 130, 246, 0.4)' },
+                        { offset: 1, color: 'rgba(59, 130, 246, 0.02)' }
+                    ])
+                },
+                lineStyle: { color: '#3b82f6', width: 2 },
+                data: chartData
+            }
+        ]
+    };
+
+    glucoseChart.setOption(option);
+    // Explicitly trigger resize after setting options to ensure flex container size is picked up
+    setTimeout(() => {
+        if (glucoseChart) glucoseChart.resize();
+    }, 0);
+}
+
+window.addEventListener('resize', () => {
+    if (glucoseChart) glucoseChart.resize();
+    if (readingsTable) {
+        const newLen = getAppropriatePageLength();
+        if (readingsTable.page.len() !== newLen) {
+            readingsTable.page.len(newLen).draw();
+        }
+    }
+});
+
 window.addEventListener('pywebviewready', () => {
     loadData();
 });
