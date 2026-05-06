@@ -28,13 +28,11 @@ run = ".venv/bin/briefcase dev"
 [tasks.release-mac]
 description = "Package and Notarize the application for macOS release"
 run = """
-echo "Enter your Apple Developer ID Application identity (e.g., 'Developer ID Application: Name (ID)'):"
-read IDENTITY
-if [ -z "$IDENTITY" ]; then
-    echo "Error: Identity is required for formal release."
-    exit 1
+if [ -z "$DELELOPER_ID_APPLICATION" ]; then
+    .venv/bin/briefcase package macOS dmg --notarize-wait
+else
+    .venv/bin/briefcase package macOS dmg --identity "$DELELOPER_ID_APPLICATION" --notarize-wait
 fi
-.venv/bin/briefcase package macOS dmg --identity "$IDENTITY" --notarize-wait
 """
 
 [tasks.clean]

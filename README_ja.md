@@ -83,10 +83,10 @@ mise run setup
 ### リリース・パッケージング
 - **macOS (署名・公証付き)**:
   セキュリティ保持のため、macOS版の署名は手元のMacで行います。
+  環境変数 `DELELOPER_ID_APPLICATION` が設定されている場合はそれを使用し、未設定の場合は実行時に選択リストが表示されます。
   ```bash
   mise run release-mac
   ```
-  実行時に Apple Developer ID の入力を求められます。
 - **Windows**:
   GitHub にプッシュすると **GitHub Actions** が自動的にビルドを開始し、`.msi` インストーラーを生成します。
 

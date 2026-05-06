@@ -83,10 +83,10 @@ mise run setup
 ### Release & Packaging
 - **macOS (Signed & Notarized)**:
   For security, code signing is performed locally on your Mac.
+  If the `DELELOPER_ID_APPLICATION` environment variable is set, it will be used; otherwise, a selection list will be displayed at runtime.
   ```bash
   mise run release-mac
   ```
-  You will be prompted to enter your Apple Developer ID.
 - **Windows**:
   Pushing to GitHub triggers **GitHub Actions**, which automatically builds and generates the `.msi` installer.
 
