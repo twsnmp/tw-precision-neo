@@ -7,6 +7,14 @@
     --text-color: #e4e1e5;
     --text-secondary: #c8c5ca;
     --accent-success: #22c55e;
+    
+    /* Glucose Level Colors */
+    --color-low: #ef4444;       /* Low: Red */
+    --color-target: #22c55e;    /* Target: Green */
+    --color-caution: #f59e0b;   /* Caution: Orange/Yellow */
+    --color-high: #ef4444;      /* High: Red */
+    --color-very-high: #991b1b; /* Very High: Dark Red */
+
     --radius-lg: 4px;
     --radius-md: 4px;
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -158,4 +166,25 @@ table.dataTable tbody td {
 .dataTables_wrapper .dataTables_paginate {
     padding-top: 0.4rem;
     font-size: 0.7rem;
+}
+
+/* Glucose Level Row Colors */
+table.dataTable tbody tr.reading-low td {
+    color: var(--color-low) !important;
+}
+
+table.dataTable tbody tr.reading-target td {
+    color: var(--color-target) !important;
+}
+
+table.dataTable tbody tr.reading-caution td {
+    color: var(--color-caution) !important;
+}
+
+table.dataTable tbody tr.reading-high td {
+    color: var(--color-high) !important;
+}
+
+table.dataTable tbody tr.reading-very-high td {
+    color: var(--color-very-high) !important;
 }

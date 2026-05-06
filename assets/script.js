@@ -69,6 +69,46 @@ function getAppropriatePageLength() {
     return windowHeight < 700 ? 5 : 10;
 }
 
+function getGlucoseRange(value, unit) {
+    const isMmol = (unit === 'mmol/L');
+    if (isMmol) {
+        if (value < 3.9) return 'low';
+        if (value <= 7.8) return 'target';
+        if (value <= 10.0) return 'caution';
+        if (value <= 13.9) return 'high';
+        return 'very-high';
+    } else {
+        // mg/dL
+        if (value < 70) return 'low';
+        if (value <= 140) return 'target';
+        if (value <= 180) return 'caution';
+        if (value <= 250) return 'high';
+        return 'very-high';
+    }
+}
+
+function getRangeLabel(range) {
+    switch(range) {
+        case 'low': return '低血糖';
+        case 'target': return '目標範囲内';
+        case 'caution': return '高め (注意)';
+        case 'high': return '高血糖';
+        case 'very-high': return '非常に高い';
+        default: return '不明';
+    }
+}
+
+function getRangeColor(range) {
+    switch(range) {
+        case 'low': return '#ef4444';       // Red
+        case 'target': return '#22c55e';    // Green
+        case 'caution': return '#f59e0b';   // Orange/Yellow
+        case 'high': return '#ef4444';      // Red
+        case 'very-high': return '#991b1b'; // Dark Red
+        default: return '#e4e1e5';
+    }
+}
+
 function updateTable(readings) {
     const pageLength = getAppropriatePageLength();
     
@@ -77,15 +117,27 @@ function updateTable(readings) {
             data: readings,
             columns: [
                 { data: 'timestamp' },
-                { data: 'value', render: (data) => data.toFixed(1) },
+                { 
+                    data: 'value', 
+                    render: (data, type, row) => {
+                        if (type === 'display') {
+                            return data.toFixed(1);
+                        }
+                        return data;
+                    } 
+                },
                 { data: 'unit' }
             ],
+            createdRow: function(row, data, dataIndex) {
+                const range = getGlucoseRange(data.value, data.unit);
+                $(row).addClass(`reading-${range}`);
+            },
             order: [[0, 'desc']],
             pageLength: pageLength,
             dom: 'ftp', 
             language: {
                 search: "",
-                searchPlaceholder: "Filter..."
+                searchPlaceholder: "フィルタ..."
             }
         });
     } else {
@@ -112,10 +164,35 @@ function renderChart(readings) {
     }
 
     const chartData = readings.map(r => [new Date(r.timestamp), r.value]);
+    const unit = readings.length > 0 ? readings[0].unit : 'mg/dL';
+    
+    const isMmol = (unit === 'mmol/L');
+    const thresholds = isMmol ? 
+        { low: 3.9, target: 7.8, caution: 10.0, high: 13.9 } : 
+        { low: 70, target: 140, caution: 180, high: 250 };
+
+    const pieces = [
+        { gt: 0, lte: thresholds.low, color: '#ef4444' },               // Low: Red
+        { gt: thresholds.low, lte: thresholds.target, color: '#22c55e' }, // Target: Green
+        { gt: thresholds.target, lte: thresholds.caution, color: '#f59e0b' }, // Caution: Orange
+        { gt: thresholds.caution, lte: thresholds.high, color: '#ef4444' }, // High: Red
+        { gt: thresholds.high, color: '#991b1b' }                      // Very High: Dark Red
+    ];
 
     const option = {
         backgroundColor: 'transparent',
-        tooltip: { trigger: 'axis' },
+        tooltip: { 
+            trigger: 'axis',
+            formatter: function(params) {
+                const p = params[0];
+                const date = new Date(p.value[0]);
+                const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const range = getGlucoseRange(p.value[1], unit);
+                const label = getRangeLabel(range);
+                const color = getRangeColor(range);
+                return `${dateStr}<br/><span style="color:${color}">●</span> ${p.seriesName}: <b>${p.value[1].toFixed(1)}</b> ${unit} (${label})`;
+            }
+        },
         grid: {
             left: 45,
             right: 20,
@@ -135,6 +212,11 @@ function renderChart(readings) {
             axisLine: { lineStyle: { color: '#27272a' } },
             splitLine: { lineStyle: { color: '#18181b' } }
         },
+        visualMap: {
+            show: false,
+            dimension: 1,
+            pieces: pieces
+        },
         dataZoom: [
             { type: 'inside', start: 0, end: 100 },
             {
@@ -150,18 +232,25 @@ function renderChart(readings) {
         ],
         series: [
             {
-                name: 'Blood Glucose',
+                name: '血糖値',
                 type: 'line',
                 smooth: true,
                 symbol: 'none',
                 areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: 'rgba(59, 130, 246, 0.4)' },
-                        { offset: 1, color: 'rgba(59, 130, 246, 0.02)' }
-                    ])
+                    opacity: 0.1
                 },
-                lineStyle: { color: '#3b82f6', width: 2 },
-                data: chartData
+                lineStyle: { width: 3 },
+                data: chartData,
+                markArea: {
+                    silent: true,
+                    itemStyle: {
+                        color: 'rgba(34, 197, 94, 0.05)'
+                    },
+                    data: [[
+                        { yAxis: thresholds.low },
+                        { yAxis: thresholds.target }
+                    ]]
+                }
             }
         ]
     };
