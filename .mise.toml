@@ -26,12 +26,12 @@ description = "Run the application in dev mode"
 run = ".venv/bin/briefcase dev"
 
 [tasks.release-mac]
-description = "Package and Notarize the application for macOS release"
+description = "Package and Notarize the application for macOS release (PKG)"
 run = """
 if [ -z "$DELELOPER_ID_APPLICATION" ]; then
-    .venv/bin/briefcase package macOS dmg --notarize-wait
+    .venv/bin/briefcase package macOS -p pkg
 else
-    .venv/bin/briefcase package macOS dmg --identity "$DELELOPER_ID_APPLICATION" --notarize-wait
+    .venv/bin/briefcase package macOS -p pkg --identity "$DELELOPER_ID_APPLICATION"
 fi
 """
 
