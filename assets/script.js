@@ -1,5 +1,6 @@
 let glucoseChart = null;
 let readingsTable = null;
+let allReadings = []; // Global store for original data
 
 async function syncDevice() {
     updateStatus('Syncing...');
@@ -18,6 +19,7 @@ async function syncDevice() {
 async function loadData() {
     try {
         const data = await pywebview.api.get_data();
+        allReadings = data.readings || []; // Store for filtering
         updateUI(data);
     } catch (e) {
         console.error('Failed to load data:', e);
@@ -69,6 +71,19 @@ function updateTable(readings) {
 function renderChart(readings) {
     if (!glucoseChart) {
         glucoseChart = echarts.init(document.getElementById('glucoseChart'), 'dark', { renderer: 'canvas' });
+        
+        // Listen for dataZoom events to filter the table
+        glucoseChart.on('dataZoom', function () {
+            const axis = glucoseChart.getModel().getComponent('xAxis', 0).axis;
+            const range = axis.scale.getExtent(); // [minTimestamp, maxTimestamp]
+            
+            const filtered = allReadings.filter(r => {
+                const t = new Date(r.timestamp).getTime();
+                return t >= range[0] && t <= range[1];
+            });
+            
+            updateTable(filtered);
+        });
     }
 
     const chartData = readings.map(r => [new Date(r.timestamp), r.value]);
