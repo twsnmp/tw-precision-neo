@@ -1,0 +1,34 @@
+[tools]
+python = "3.14"
+
+[env]
+PYTHONPATH = "src"
+
+[tasks.setup]
+description = "Setup development environment"
+run = """
+python -m venv .venv
+.venv/bin/pip install --upgrade pip
+.venv/bin/pip install briefcase pytest
+.venv/bin/pip install -r requirements.txt
+"""
+
+[tasks.test]
+description = "Run tests"
+run = ".venv/bin/pytest"
+
+[tasks.build]
+description = "Build the application"
+run = ".venv/bin/briefcase build"
+
+[tasks.dev]
+description = "Run the application in dev mode"
+run = ".venv/bin/briefcase dev"
+
+[tasks.package]
+description = "Package the application for distribution"
+run = ".venv/bin/briefcase package"
+
+[tasks.clean]
+description = "Clean build artifacts"
+run = "rm -rf build logs .venv"

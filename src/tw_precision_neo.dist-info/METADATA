@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Briefcase-Version: 0.4.1
+Name: tw_precision_neo
+Formal-Name: TW Precision Neo Analyst
+App-ID: com.twsnmp.tw-precision-neo
+Version: 0.0.1
+Home-page: https://github.com/twsnmp/tw-precision-neo
+Download-URL: https://github.com/twsnmp/tw-precision-neo
+Author: twsnmp
+Author-email: user@example.com
+Summary: FreeStyle Precision Neo Trend Discovery

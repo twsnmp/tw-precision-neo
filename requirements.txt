@@ -1,0 +1,4 @@
+glucometerutils[freestyle-hid] @ git+https://github.com/Flameeyes/glucometerutils.git
+pandas
+pytest
+pywebview

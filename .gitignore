@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# mise
+.mise.local.toml
+.mise/
+
+# Briefcase cache
+.briefcase/
+
+.DS_Store
+.gemini/

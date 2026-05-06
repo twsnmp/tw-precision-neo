@@ -1,0 +1,184 @@
+:root {
+    --bg-color: #09090b;
+    --surface-color: #18181b;
+    --surface-bright: #39393c;
+    --border-color: #27272a;
+    --primary-color: #3b82f6;
+    --text-color: #e4e1e5;
+    --text-secondary: #c8c5ca;
+    --accent-success: #22c55e;
+    --radius-lg: 8px;
+    --radius-md: 4px;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+header {
+    background-color: var(--surface-color);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+h1 { 
+    margin: 0; 
+    font-size: 1.25rem; 
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-color);
+}
+
+.controls { display: flex; gap: 0.75rem; align-items: center; }
+
+button {
+    background: var(--primary-color);
+    color: #ffffff;
+    border: 1px solid transparent;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+button:hover {
+    background-color: #2563eb;
+}
+
+button:active {
+    background-color: #1d4ed8;
+}
+
+button:disabled { 
+    background: var(--border-color); 
+    color: var(--text-secondary);
+    cursor: not-allowed; 
+}
+
+#sync-btn {
+    background: var(--primary-color);
+}
+
+#import-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+#import-btn:hover {
+    background: var(--border-color);
+}
+
+#status {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: var(--bg-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    border: 1px solid var(--border-color);
+    font-family: var(--font-mono);
+}
+
+main { 
+    padding: 2rem; 
+    max-width: 1200px; 
+    margin: 0 auto; 
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.card {
+    background: var(--surface-color);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+}
+
+.card h2 { 
+    margin-top: 0; 
+    font-size: 0.75rem; 
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary); 
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+#tir-value { 
+    font-size: 3rem; 
+    font-weight: 700; 
+    color: var(--accent-success);
+    font-family: var(--font-mono);
+}
+
+.chart-container { 
+    height: 350px; 
+}
+
+.data-list {
+    background: var(--surface-color);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+}
+
+.data-list h2 {
+    margin-top: 0;
+    font-size: 0.875rem;
+    color: var(--text-color);
+    margin-bottom: 1.25rem;
+    font-weight: 600;
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 0; 
+}
+
+th { 
+    text-align: left; 
+    padding: 0.75rem 1rem; 
+    color: var(--text-secondary); 
+    font-weight: 500; 
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-color);
+}
+
+td { 
+    padding: 0.875rem 1rem; 
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.875rem;
+    font-family: var(--font-mono);
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
