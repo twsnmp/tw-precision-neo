@@ -32,7 +32,7 @@ APP_ID="$DEVELOPER_ID_APPLICATION"
 INST_ID="$DEVELOPER_ID_INSTALLER"
 
 echo "Building for macOS..."
-.venv/bin/briefcase build macOS --non-interactive
+.venv/bin/briefcase build macOS --no-input
 
 echo "Cleaning up problematic object files for notarization..."
 # Delete any .o files in the Python framework that cause notarization failures
