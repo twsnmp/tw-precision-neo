@@ -49,6 +49,34 @@ class API:
                 import hid
                 import time
                 from glucometerutils.drivers import fsprecisionneo
+                
+                # --- MONKEY PATCH FOR WINDOWS HIDAPI READ ERROR ---
+                # On Windows, cython-hidapi can throw "OSError: read error" if the requested 
+                # read size is exactly the report size (64) instead of the report size + 1 (65) 
+                # for the Report ID. We monkey patch HidApi.read to request 65 bytes on Windows,
+                # and strip the report ID if it's prepended.
+                try:
+                    import freestyle_hid._hidwrapper
+                    if not hasattr(freestyle_hid._hidwrapper.HidApi, '_original_read'):
+                        freestyle_hid._hidwrapper.HidApi._original_read = freestyle_hid._hidwrapper.HidApi.read
+                        
+                        def patched_read(self, size: int = 64) -> bytes:
+                            if platform.system() == "Windows":
+                                # Request larger buffer
+                                raw_data = bytes(self._handle.read(size + 1, timeout_ms=5000))
+                                # On Windows, if Report ID 0 is prepended, the length might be size+1
+                                if len(raw_data) == size + 1 and raw_data[0] == 0:
+                                    return raw_data[1:]
+                                return raw_data[:size]
+                            else:
+                                return bytes(self._handle.read(size, timeout_ms=0))
+                                
+                        freestyle_hid._hidwrapper.HidApi.read = patched_read
+                        print("Applied Windows HidApi.read monkey-patch.")
+                except ImportError:
+                    pass
+                # ---------------------------------------------------
+                
                 print("HID and fsprecisionneo modules imported successfully.")
                 
                 # Known Vendor/Product IDs for FreeStyle Precision Neo / Optium Neo
