@@ -3,6 +3,7 @@ import os
 import json
 import pandas as pd
 import platform
+import gc
 from datetime import datetime
 from .exporter import Exporter
 from .storage import SQLiteStorage
@@ -87,20 +88,29 @@ class API:
                         path = None
 
                     max_retries = 3
+                    driver = None
                     for attempt in range(max_retries):
                         try:
-                            print(f"Connection attempt {attempt + 1}/{max_retries} using path: {path}")
-                            # Wait a bit before connection if it's a retry
-                            if attempt > 0:
+                            # If we have a lingering driver from a failed attempt, clean it up
+                            if driver:
+                                print("Cleaning up previous driver instance before retry...")
+                                del driver
+                                driver = None
+                                gc.collect()
                                 time.sleep(1.0)
+
+                            print(f"Connection attempt {attempt + 1}/{max_retries} using path: {path}")
+                            # Wait longer before connection if it's a retry
+                            if attempt > 0:
+                                time.sleep(2.0)
                             
                             driver = fsprecisionneo.Device(path)
                             print("Device driver initialized successfully.")
 
                             exporter = Exporter(driver)
                             print("Fetching readings...")
-                            # Add a tiny delay before first read
-                            time.sleep(0.2)
+                            # Add a longer delay before first read on Windows
+                            time.sleep(1.0 if platform.system() == "Windows" else 0.2)
                             readings = exporter.fetch_all_readings()
                             
                             print(f"Fetched {len(readings)} readings.")
@@ -109,10 +119,10 @@ class API:
                         
                         except OSError as os_err:
                             print(f"Attempt {attempt + 1} failed with OSError: {os_err}")
-                            if "read error" in str(os_err).lower() and attempt < max_retries - 1:
-                                print("Detected 'read error' on Windows. This often means the device is busy or requires exclusive access. Retrying...")
+                            if attempt < max_retries - 1:
+                                print("Retrying after OSError (possibly device busy or read error)...")
                                 continue
-                            raise # Re-raise if it's the last attempt or not a read error
+                            raise
                         except Exception as e:
                             print(f"Attempt {attempt + 1} failed with error: {e}")
                             if attempt < max_retries - 1:
@@ -125,6 +135,9 @@ class API:
                 print(f"Module Import Error: {imp_err}")
             except Exception as e:
                 print(f"CRITICAL: Device connection/sync failed: {e}")
+                if 'driver' in locals() and driver:
+                    del driver
+                    gc.collect()
                 import traceback
                 traceback.print_exc()
 
