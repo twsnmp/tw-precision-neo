@@ -27,7 +27,7 @@ jobs:
 
       - name: Build and Package
         run: |
-          briefcase package windows msi --no-sign --non-interactive
+          briefcase package windows --no-sign --no-input
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
