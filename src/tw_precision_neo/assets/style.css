@@ -244,6 +244,23 @@ table.dataTable tbody tr.reading-very-high td {
     color: var(--text-color);
 }
 
+.modal-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.modal-controls select {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+    outline: none;
+    cursor: pointer;
+}
+
 .close-btn {
     color: var(--text-secondary);
     font-size: 1.5rem;
@@ -296,4 +313,9 @@ table.dataTable tbody tr.reading-very-high td {
 #statsChart {
     width: 100%;
     height: 300px;
+}
+
+#heatmapChart {
+    width: 100%;
+    height: 450px;
 }

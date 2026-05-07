@@ -1,11 +1,13 @@
 let glucoseChart = null;
 let statsChart = null;
+let heatmapChart = null;
 let readingsTable = null;
 let allReadings = []; // Global store for original data
 
 const translations = {
     en: {
         stats_btn: "Stats",
+        heatmap_btn: "Heatmap",
         sync_btn: "Sync Device",
         export_btn: "Export CSV",
         status_ready: "Ready",
@@ -32,10 +34,16 @@ const translations = {
         lbl_avg: "Average",
         lbl_median: "Median",
         lbl_stddev: "Std Dev",
-        lbl_count: "Count"
+        lbl_count: "Count",
+        heatmap_title: "Glucose Heatmap (Day vs Hour)",
+        metric_count: "Count",
+        metric_average: "Average",
+        days: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        hours: ["12a", "1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12p", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p"]
     },
     ja: {
         stats_btn: "統計",
+        heatmap_btn: "ヒートマップ",
         sync_btn: "デバイス同期",
         export_btn: "CSV出力",
         status_ready: "準備完了",
@@ -62,7 +70,12 @@ const translations = {
         lbl_avg: "平均値",
         lbl_median: "中央値",
         lbl_stddev: "標準偏差",
-        lbl_count: "測定数"
+        lbl_count: "測定数",
+        heatmap_title: "時間帯別ヒートマップ",
+        metric_count: "測定回数",
+        metric_average: "平均値",
+        days: ["日", "月", "火", "水", "木", "金", "土"],
+        hours: ["0時", "1時", "2時", "3時", "4時", "5時", "6時", "7時", "8時", "9時", "10時", "11時", "12時", "13時", "14時", "15時", "16時", "17時", "18時", "19時", "20時", "21時", "22時", "23時"]
     }
 };
 
@@ -93,6 +106,9 @@ function updateStaticText() {
     const statsBtn = document.getElementById('stats-btn');
     if (statsBtn) statsBtn.innerText = t.stats_btn;
 
+    const heatmapBtn = document.getElementById('heatmap-btn');
+    if (heatmapBtn) heatmapBtn.innerText = t.heatmap_btn;
+
     const syncBtn = document.getElementById('sync-btn');
     if (syncBtn) syncBtn.innerText = t.sync_btn;
     
@@ -104,6 +120,9 @@ function updateStaticText() {
 
     const statsTitle = document.getElementById('stats-title');
     if (statsTitle) statsTitle.innerText = t.stats_title;
+
+    const heatmapTitle = document.getElementById('heatmap-title');
+    if (heatmapTitle) heatmapTitle.innerText = t.heatmap_title;
     
     const tableTitle = document.getElementById('table-title');
     if (tableTitle) tableTitle.innerText = t.table_title;
@@ -117,6 +136,13 @@ function updateStaticText() {
     const thUnit = document.getElementById('th-unit');
     if (thUnit) thUnit.innerText = t.th_unit;
 
+    // Heatmap metric selector
+    const heatmapMetric = document.getElementById('heatmap-metric');
+    if (heatmapMetric) {
+        heatmapMetric.options[0].text = t.metric_count;
+        heatmapMetric.options[1].text = t.metric_average;
+    }
+
     // Detailed stats labels
     const lbls = ['max', 'min', 'avg', 'median', 'stddev', 'count'];
     lbls.forEach(l => {
@@ -126,7 +152,6 @@ function updateStaticText() {
     
     const statusEl = document.getElementById('status');
     if (statusEl) {
-        // Simple way to handle initial/ready state
         if (statusEl.innerText === translations.en.status_ready || 
             statusEl.innerText === translations.ja.status_ready ||
             statusEl.innerText === "Ready") {
@@ -189,6 +214,8 @@ function updateStatus(msg) {
 function setButtonsDisabled(disabled) {
     const statsBtn = document.getElementById('stats-btn');
     if (statsBtn) statsBtn.disabled = disabled;
+    const heatmapBtn = document.getElementById('heatmap-btn');
+    if (heatmapBtn) heatmapBtn.disabled = disabled;
     const syncBtn = document.getElementById('sync-btn');
     if (syncBtn) syncBtn.disabled = disabled;
     const exportBtn = document.getElementById('export-btn');
@@ -415,6 +442,21 @@ function hideStats() {
     }
 }
 
+function showHeatmap() {
+    const modal = document.getElementById('heatmap-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        renderHeatmap();
+    }
+}
+
+function hideHeatmap() {
+    const modal = document.getElementById('heatmap-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
 function formatDate(dateStr) {
     const date = new Date(dateStr);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -429,14 +471,12 @@ function renderStatsChart() {
         statsChart = echarts.init(chartEl, 'dark', { renderer: 'canvas' });
     }
 
-    // Get currently visible data (respected by chart zoom and search filter)
     let readingsToProcess = allReadings;
     if (readingsTable) {
         readingsToProcess = readingsTable.rows({ search: 'applied' }).data().toArray();
     }
 
     if (readingsToProcess.length === 0) {
-        // Reset values
         const ids = ['max', 'min', 'avg', 'median', 'stddev', 'count'];
         ids.forEach(id => {
             const el = document.getElementById(`val-${id}`);
@@ -448,10 +488,7 @@ function renderStatsChart() {
         return;
     }
 
-    // Aggregate range data for pie chart
     const counts = { 'low': 0, 'target': 0, 'caution': 0, 'high': 0, 'very-high': 0 };
-    
-    // Descriptive stats
     const values = readingsToProcess.map(r => r.value);
     const unit = readingsToProcess[0].unit;
     
@@ -469,24 +506,17 @@ function renderStatsChart() {
     });
 
     const avg = sum / readingsToProcess.length;
-    
-    // Median
     const sortedValues = [...values].sort((a, b) => a - b);
     const mid = Math.floor(sortedValues.length / 2);
     const median = sortedValues.length % 2 !== 0 ? sortedValues[mid] : (sortedValues[mid - 1] + sortedValues[mid]) / 2;
-
-    // Standard Deviation
     const squareDiffs = values.map(v => Math.pow(v - avg, 2));
     const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / squareDiffs.length;
     const stdDev = Math.sqrt(avgSquareDiff);
 
-    // Update UI
     document.getElementById('val-max').innerText = `${maxReading.value.toFixed(1)} ${unit}`;
     document.getElementById('time-max').innerText = formatDate(maxReading.timestamp);
-    
     document.getElementById('val-min').innerText = `${minReading.value.toFixed(1)} ${unit}`;
     document.getElementById('time-min').innerText = formatDate(minReading.timestamp);
-    
     document.getElementById('val-avg').innerText = `${avg.toFixed(1)} ${unit}`;
     document.getElementById('val-median').innerText = `${median.toFixed(1)} ${unit}`;
     document.getElementById('val-stddev').innerText = `${stdDev.toFixed(1)} ${unit}`;
@@ -540,17 +570,129 @@ function renderStatsChart() {
     }, 0);
 }
 
+function renderHeatmap() {
+    const t = translations[currentLanguage];
+    const chartEl = document.getElementById('heatmapChart');
+    if (!chartEl) return;
+    
+    if (!heatmapChart) {
+        heatmapChart = echarts.init(chartEl, 'dark', { renderer: 'canvas' });
+    }
+
+    let readingsToProcess = allReadings;
+    if (readingsTable) {
+        readingsToProcess = readingsTable.rows({ search: 'applied' }).data().toArray();
+    }
+
+    const metric = document.getElementById('heatmap-metric').value; // 'count' or 'average'
+    const unit = readingsToProcess.length > 0 ? readingsToProcess[0].unit : '';
+
+    // Initialize 24x7 grid
+    const grid = [];
+    for (let day = 0; day < 7; day++) {
+        for (let hour = 0; hour < 24; hour++) {
+            grid.push([hour, day, { sum: 0, count: 0 }]);
+        }
+    }
+
+    readingsToProcess.forEach(r => {
+        const date = new Date(r.timestamp);
+        const day = date.getDay();
+        const hour = date.getHours();
+        const idx = day * 24 + hour;
+        grid[idx][2].sum += r.value;
+        grid[idx][2].count++;
+    });
+
+    const data = grid.map(item => {
+        const valObj = item[2];
+        let value = 0;
+        if (metric === 'count') {
+            value = valObj.count;
+        } else {
+            value = valObj.count > 0 ? valObj.sum / valObj.count : 0;
+        }
+        return [item[0], item[1], value || '-'];
+    });
+
+    const maxVal = Math.max(...data.map(d => typeof d[2] === 'number' ? d[2] : 0)) || 1;
+
+    const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+            position: 'top',
+            formatter: (params) => {
+                const hour = t.hours[params.data[0]];
+                const day = t.days[params.data[1]];
+                const val = params.data[2];
+                const label = metric === 'count' ? t.metric_count : t.metric_average;
+                const formattedVal = typeof val === 'number' ? (metric === 'count' ? val : val.toFixed(1) + ' ' + unit) : '--';
+                return `${day} ${hour}<br/>${label}: <b>${formattedVal}</b>`;
+            }
+        },
+        grid: {
+            height: '70%',
+            top: '10%',
+            left: '10%',
+            right: '5%'
+        },
+        xAxis: {
+            type: 'category',
+            data: t.hours,
+            splitArea: { show: true },
+            axisLabel: { interval: 1 }
+        },
+        yAxis: {
+            type: 'category',
+            data: t.days,
+            splitArea: { show: true }
+        },
+        visualMap: {
+            min: 0,
+            max: maxVal,
+            calculable: true,
+            orient: 'horizontal',
+            left: 'center',
+            bottom: '5%',
+            inRange: {
+                color: metric === 'count' ? ['#18181b', '#3b82f6'] : ['#22c55e', '#f59e0b', '#ef4444']
+            },
+            textStyle: { color: '#c8c5ca' }
+        },
+        series: [{
+            name: 'Glucose Heatmap',
+            type: 'heatmap',
+            data: data,
+            label: {
+                show: false
+            },
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            }
+        }]
+    };
+
+    heatmapChart.setOption(option);
+    setTimeout(() => {
+        if (heatmapChart) heatmapChart.resize();
+    }, 0);
+}
+
 // Close modal when clicking outside
 window.onclick = function(event) {
-    const modal = document.getElementById('stats-modal');
-    if (event.target == modal) {
-        hideStats();
-    }
+    const statsModal = document.getElementById('stats-modal');
+    const heatmapModal = document.getElementById('heatmap-modal');
+    if (event.target == statsModal) hideStats();
+    if (event.target == heatmapModal) hideHeatmap();
 }
 
 window.addEventListener('resize', () => {
     if (glucoseChart) glucoseChart.resize();
     if (statsChart) statsChart.resize();
+    if (heatmapChart) heatmapChart.resize();
     if (readingsTable) {
         const newLen = getAppropriatePageLength();
         if (readingsTable.page.len() !== newLen) {

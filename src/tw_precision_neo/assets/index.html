@@ -18,6 +18,7 @@
                 <option value="en">English</option>
                 <option value="ja">日本語</option>
             </select>
+            <button id="heatmap-btn" onclick="showHeatmap()">Heatmap</button>
             <button id="stats-btn" onclick="showStats()">Stats</button>
             <button id="sync-btn" onclick="syncDevice()">Sync Device</button>
             <button id="export-btn" onclick="exportCSV()">Export CSV</button>
@@ -84,6 +85,22 @@
                 </div>
             </div>
             <div id="statsChart"></div>
+        </div>
+    </div>
+
+    <div id="heatmap-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="heatmap-title">Glucose Heatmap</h2>
+                <div class="modal-controls">
+                    <select id="heatmap-metric" onchange="renderHeatmap()">
+                        <option value="count">Count</option>
+                        <option value="average">Average</option>
+                    </select>
+                    <span class="close-btn" onclick="hideHeatmap()">&times;</span>
+                </div>
+            </div>
+            <div id="heatmapChart"></div>
         </div>
     </div>
 
