@@ -138,6 +138,10 @@ class API:
                             try:
                                 if driver:
                                     print("Cleaning up previous driver instance before retry...")
+                                    try:
+                                        driver.disconnect()
+                                    except Exception:
+                                        pass
                                     del driver
                                     driver = None
                                     gc.collect()
@@ -149,6 +153,9 @@ class API:
                                 
                                 driver = fsprecisionneo.Device(path)
                                 print("Device driver initialized successfully.")
+                                
+                                print("Connecting to device (knocking sequence)...")
+                                driver.connect()
 
                                 exporter = Exporter(driver)
                                 print("Fetching readings...")
@@ -157,6 +164,12 @@ class API:
                                 
                                 print(f"Fetched {len(readings)} readings from this interface!")
                                 count = self.storage.save_readings(readings)
+                                
+                                try:
+                                    driver.disconnect()
+                                except Exception:
+                                    pass
+                                    
                                 return {"message": f"Synced {count} new readings from device ({device_info.get('product_string', 'Neo')})."}
                             
                             except OSError as os_err:
@@ -173,6 +186,10 @@ class API:
                                 
                         # If we exhausted retries for this interface, clean up and try the next one
                         if 'driver' in locals() and driver:
+                            try:
+                                driver.disconnect()
+                            except Exception:
+                                pass
                             del driver
                             gc.collect()
 
