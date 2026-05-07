@@ -729,6 +729,16 @@ window.addEventListener('resize', () => {
     }
 });
 
+async function loadVersion() {
+    try {
+        const version = await pywebview.api.get_version();
+        const el = document.getElementById('version-display');
+        if (el) el.innerText = 'v' + version;
+    } catch (e) {
+        console.error('Failed to load version:', e);
+    }
+}
+
 window.addEventListener('pywebviewready', () => {
     // Detect language
     const userLang = navigator.language || navigator.userLanguage;
@@ -738,4 +748,5 @@ window.addEventListener('pywebviewready', () => {
         changeLanguage('en');
     }
     loadData();
+    loadVersion();
 });

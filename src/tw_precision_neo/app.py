@@ -8,6 +8,7 @@ import traceback
 from datetime import datetime
 from .exporter import Exporter
 from .storage import SQLiteStorage
+from . import __version__
 
 # Check for mock
 try:
@@ -19,6 +20,9 @@ except ImportError:
 class API:
     def __init__(self, storage):
         self.storage = storage
+
+    def get_version(self):
+        return __version__
 
     def get_data(self):
         df = self.storage.get_all_readings()

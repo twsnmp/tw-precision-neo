@@ -54,6 +54,13 @@ h1 {
     font-weight: 600;
 }
 
+#version-display {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-left: 0.4rem;
+}
+
 .controls { display: flex; gap: 0.5rem; align-items: center; }
 
 #language-selector {
