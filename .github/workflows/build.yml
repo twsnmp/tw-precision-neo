@@ -10,6 +10,9 @@ jobs:
   package-windows:
     name: Package for Windows
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
     permissions:
       id-token: write
       contents: read
@@ -33,25 +36,25 @@ jobs:
 
       - name: Get Version
         id: vars
-        shell: bash
         run: |
-          git describe --tags --always 2>/dev/null > version.txt || echo "0.0.0" > version.txt
-          sed -i 's/^v//' version.txt
-          echo -n "VERSION=" >> $GITHUB_OUTPUT
-          cat version.txt >> $GITHUB_OUTPUT
+          # Use --abbrev=0 to get only the tag name, and fallback to v0.0.0 if no tags exist
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          VERSION=${TAG#v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
 
       - name: Create and Build App
         run: |
-          briefcase create windows --no-input -C version="${{ steps.vars.outputs.VERSION }}"
-          briefcase build windows --no-input -C version="${{ steps.vars.outputs.VERSION }}"
+          briefcase create windows --no-input -C version=\"${{ steps.vars.outputs.VERSION }}\"
+          briefcase build windows --no-input -C version=\"${{ steps.vars.outputs.VERSION }}\"
 
       - name: Package (MSI)
         run: |
-          briefcase package windows -p msi --no-input -C version="${{ steps.vars.outputs.VERSION }}"
+          briefcase package windows -p msi --no-input -C version=\"${{ steps.vars.outputs.VERSION }}\"
 
       - name: Package (ZIP)
         run: |
-          briefcase package windows -p zip --no-input -C version="${{ steps.vars.outputs.VERSION }}"
+          briefcase package windows -p zip --no-input -C version=\"${{ steps.vars.outputs.VERSION }}\"
 
       - name: Attest Build Provenance
         uses: actions/attest-build-provenance@v2
