@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -29,18 +31,27 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install briefcase
 
+      - name: Get Version
+        id: vars
+        shell: bash
+        run: |
+          git describe --tags --always 2>/dev/null > version.txt || echo "0.0.0" > version.txt
+          sed -i 's/^v//' version.txt
+          echo -n "VERSION=" >> $GITHUB_OUTPUT
+          cat version.txt >> $GITHUB_OUTPUT
+
       - name: Create and Build App
         run: |
-          briefcase create windows --no-input
-          briefcase build windows --no-input
+          briefcase create windows --no-input -C version="${{ steps.vars.outputs.VERSION }}"
+          briefcase build windows --no-input -C version="${{ steps.vars.outputs.VERSION }}"
 
       - name: Package (MSI)
         run: |
-          briefcase package windows -p msi --no-input
+          briefcase package windows -p msi --no-input -C version="${{ steps.vars.outputs.VERSION }}"
 
       - name: Package (ZIP)
         run: |
-          briefcase package windows -p zip --no-input
+          briefcase package windows -p zip --no-input -C version="${{ steps.vars.outputs.VERSION }}"
 
       - name: Attest Build Provenance
         uses: actions/attest-build-provenance@v2
