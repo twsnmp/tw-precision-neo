@@ -15,9 +15,9 @@ def test_exporter_fetch_all_readings():
     exporter = Exporter(mock_driver)
     readings = exporter.fetch_all_readings()
 
-    assert len(readings) == 3
-    assert readings[0]["value"] == 110.0
-    assert readings[1]["value"] == 145.0
-    assert readings[2]["value"] == 98.0
-    assert readings[0]["unit"] == "mg/dL"
+    # Now MockDriver generates 30 days of data (approx 150-180 readings)
+    assert len(readings) > 100
+    assert "value" in readings[0]
+    assert "unit" in readings[0]
     assert "timestamp" in readings[0]
+    assert readings[0]["unit"] == "mg/dL"

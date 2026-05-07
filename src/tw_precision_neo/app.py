@@ -8,7 +8,6 @@ import traceback
 from datetime import datetime
 from .exporter import Exporter
 from .storage import SQLiteStorage
-from .analysis import AnalysisEngine
 
 # Check for mock
 try:
@@ -24,11 +23,8 @@ class API:
     def get_data(self):
         df = self.storage.get_all_readings()
         if df.empty:
-            return {"readings": [], "tir": {"in_range": 0}}
-        
-        engine = AnalysisEngine(df)
-        tir = engine.get_time_in_range()
-        
+            return {"readings": []}
+
         # Convert to list of dicts for JSON
         readings = []
         for _, r in df.iterrows():
@@ -37,10 +33,9 @@ class API:
                 "value": float(r["value"]),
                 "unit": r["unit"]
             })
-            
+
         return {
-            "readings": readings,
-            "tir": tir
+            "readings": readings
         }
 
     def sync_device(self):

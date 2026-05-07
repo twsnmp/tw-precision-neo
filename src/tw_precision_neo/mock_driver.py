@@ -1,5 +1,6 @@
+import random
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Iterable, Optional
 
 @dataclass
@@ -21,9 +22,50 @@ class MockDriver:
         return MockMeterInfo()
 
     def get_readings(self) -> Iterable[MockReading]:
-        # Generate some mock readings
-        return [
-            MockReading(timestamp=datetime(2026, 4, 28, 8, 0), value=110.0, unit="mg/dL"),
-            MockReading(timestamp=datetime(2026, 4, 28, 12, 30), value=145.0, unit="mg/dL"),
-            MockReading(timestamp=datetime(2026, 4, 29, 7, 15), value=98.0, unit="mg/dL"),
+        """Generate 30 days of mock readings with daily patterns."""
+        readings = []
+        now = datetime.now()
+        start_date = now - timedelta(days=30)
+        
+        # Daily routines (hour, base_value, variation)
+        routines = [
+            (7, 95, 10),   # Breakfast
+            (12, 110, 20),  # Lunch
+            (18, 130, 30),  # Dinner
+            (22, 105, 15),  # Bedtime
         ]
+
+        for day in range(31):
+            current_day = start_date + timedelta(days=day)
+            
+            # 1. Routine readings
+            for hour, base, var in routines:
+                # Add some randomness to the time (within +/- 30 mins)
+                minute = random.randint(0, 59)
+                ts = current_day.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                
+                # Add some randomness to the value
+                val = base + random.uniform(-var, var)
+                
+                # Occasionally simulate a high or low value for better stats/heatmap demo
+                if random.random() < 0.05:
+                    val += 50  # Spike
+                elif random.random() < 0.05:
+                    val -= 30  # Dip
+                
+                readings.append(MockReading(timestamp=ts, value=round(val, 1), unit="mg/dL"))
+
+            # 2. Add 1-2 random "unscheduled" readings
+            num_extra = random.randint(1, 2)
+            for _ in range(num_extra):
+                hour = random.randint(0, 23)
+                minute = random.randint(0, 59)
+                ts = current_day.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                
+                # Random base between 80 and 150
+                val = random.uniform(80, 150)
+                readings.append(MockReading(timestamp=ts, value=round(val, 1), unit="mg/dL"))
+        
+        # Sort by timestamp
+        readings.sort(key=lambda x: x.timestamp)
+        return readings
