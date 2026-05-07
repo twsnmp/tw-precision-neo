@@ -81,6 +81,14 @@ button {
     font-size: 0.75rem;
 }
 
+#clear-btn {
+    background: var(--color-low);
+}
+
+#clear-btn:hover {
+    background: var(--color-very-high);
+}
+
 #status {
     font-size: 0.65rem;
     color: var(--text-secondary);

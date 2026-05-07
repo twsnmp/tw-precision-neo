@@ -223,6 +223,13 @@ class API:
         except Exception as e:
             return {"message": f"Export failed: {e}"}
 
+    def clear_data(self):
+        try:
+            self.storage.clear_all_readings()
+            return {"message": "All data cleared successfully."}
+        except Exception as e:
+            return {"message": f"Failed to clear data: {e}"}
+
 def main():
     # Setup data directory
     if os.name == 'nt':

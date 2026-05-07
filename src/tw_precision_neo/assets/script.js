@@ -10,9 +10,11 @@ const translations = {
         heatmap_btn: "Heatmap",
         sync_btn: "Sync Device",
         export_btn: "Export CSV",
+        clear_btn: "Clear All",
         status_ready: "Ready",
         status_syncing: "Syncing...",
         status_exporting: "Exporting...",
+        status_clearing: "Clearing data...",
         status_no_data: "No data to export.",
         chart_title: "Glucose Trends",
         table_title: "All Readings",
@@ -38,6 +40,7 @@ const translations = {
         heatmap_title: "Glucose Heatmap (Day vs Hour)",
         metric_count: "Count",
         metric_average: "Average",
+        confirm_clear: "Are you sure you want to delete ALL data? This cannot be undone.",
         days: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
         hours: ["12a", "1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12p", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p"]
     },
@@ -46,9 +49,11 @@ const translations = {
         heatmap_btn: "ヒートマップ",
         sync_btn: "デバイス同期",
         export_btn: "CSV出力",
+        clear_btn: "データクリア",
         status_ready: "準備完了",
         status_syncing: "同期中...",
         status_exporting: "出力中...",
+        status_clearing: "データ削除中...",
         status_no_data: "出力するデータがありません。",
         chart_title: "血糖値トレンド",
         table_title: "全測定データ",
@@ -74,6 +79,7 @@ const translations = {
         heatmap_title: "時間帯別ヒートマップ",
         metric_count: "測定回数",
         metric_average: "平均値",
+        confirm_clear: "全てのデータを削除してもよろしいですか？この操作は取り消せません。",
         days: ["日", "月", "火", "水", "木", "金", "土"],
         hours: ["0時", "1時", "2時", "3時", "4時", "5時", "6時", "7時", "8時", "9時", "10時", "11時", "12時", "13時", "14時", "15時", "16時", "17時", "18時", "19時", "20時", "21時", "22時", "23時"]
     }
@@ -114,6 +120,9 @@ function updateStaticText() {
     
     const exportBtn = document.getElementById('export-btn');
     if (exportBtn) exportBtn.innerText = t.export_btn;
+
+    const clearBtn = document.getElementById('clear-btn');
+    if (clearBtn) clearBtn.innerText = t.clear_btn;
     
     const chartTitle = document.getElementById('chart-title');
     if (chartTitle) chartTitle.innerText = t.chart_title;
@@ -196,6 +205,23 @@ async function exportCSV() {
     }
 }
 
+async function clearData() {
+    const t = translations[currentLanguage];
+    if (!confirm(t.confirm_clear)) return;
+
+    updateStatus(t.status_clearing);
+    setButtonsDisabled(true);
+    try {
+        const result = await pywebview.api.clear_data();
+        updateStatus(result.message);
+        loadData();
+    } catch (e) {
+        updateStatus('Clear Error: ' + e);
+    } finally {
+        setButtonsDisabled(false);
+    }
+}
+
 async function loadData() {
     try {
         const data = await pywebview.api.get_data();
@@ -220,6 +246,8 @@ function setButtonsDisabled(disabled) {
     if (syncBtn) syncBtn.disabled = disabled;
     const exportBtn = document.getElementById('export-btn');
     if (exportBtn) exportBtn.disabled = disabled;
+    const clearBtn = document.getElementById('clear-btn');
+    if (clearBtn) clearBtn.disabled = disabled;
 }
 
 function updateUI(data) {

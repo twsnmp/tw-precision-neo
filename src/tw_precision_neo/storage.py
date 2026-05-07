@@ -70,3 +70,11 @@ class SQLiteStorage:
         count = cursor.fetchone()[0]
         conn.close()
         return count
+
+    def clear_all_readings(self):
+        """Delete all readings from the database."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM readings")
+        conn.commit()
+        conn.close()
