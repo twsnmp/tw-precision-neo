@@ -92,12 +92,9 @@ class API:
                                 return bytes(self._handle.read(size, timeout_ms=0))
                                 
                         freestyle_hid._hidwrapper.HidApi.read = patched_read
-                        print("Applied Windows HidWrapper.open and HidApi.read monkey-patches.")
                 except ImportError:
                     pass
                 # ---------------------------------------------------
-                
-                print("HID and fsprecisionneo modules imported successfully.")
                 
                 # Known Vendor/Product IDs for FreeStyle Precision Neo / Optium Neo
                 # 0x1a74: Abbott, 0x1a61: Abbott Diabetes Care (ADC P2)
@@ -111,15 +108,12 @@ class API:
                     enum_results = hid.enumerate(vid, pid)
                     for d in enum_results:
                         target_paths.append((d.get('path'), d))
-                        print(f"Detected Abbott device interface: VID={hex(vid)}, PID={hex(pid)}, Path={d.get('path')}")
                 
                 if not target_paths:
-                    print("No known device IDs found. Enumerating all HID devices...")
                     for d in hid.enumerate():
                         manufacturer = d.get('manufacturer_string', '')
                         if manufacturer and "Abbott" in manufacturer:
                             target_paths.append((d.get('path'), d))
-                            print(f"Detected Abbott device by manufacturer: {manufacturer} (VID={hex(d['vendor_id'])}, PID={hex(d['product_id'])})")
 
                 if target_paths:
                     last_error = None
@@ -130,14 +124,11 @@ class API:
                         if isinstance(path, bytes):
                             path = path.decode('ascii', errors='ignore')
 
-                        print(f"\n--- Trying interface path: {path} ---")
-                        
                         max_retries = 2
                         driver = None
                         for attempt in range(max_retries):
                             try:
                                 if driver:
-                                    print("Cleaning up previous driver instance before retry...")
                                     try:
                                         driver.disconnect()
                                     except Exception:
@@ -147,22 +138,16 @@ class API:
                                     gc.collect()
                                     time.sleep(1.0)
 
-                                print(f"Connection attempt {attempt + 1}/{max_retries} using path: {path}")
                                 if attempt > 0:
                                     time.sleep(1.5)
                                 
                                 driver = fsprecisionneo.Device(path)
-                                print("Device driver initialized successfully.")
-                                
-                                print("Connecting to device (knocking sequence)...")
                                 driver.connect()
 
                                 exporter = Exporter(driver)
-                                print("Fetching readings...")
                                 time.sleep(0.5)
                                 readings = exporter.fetch_all_readings()
                                 
-                                print(f"Fetched {len(readings)} readings from this interface!")
                                 count = self.storage.save_readings(readings)
                                 
                                 try:
@@ -173,13 +158,10 @@ class API:
                                 return {"message": f"Synced {count} new readings from device ({device_info.get('product_string', 'Neo')})."}
                             
                             except OSError as os_err:
-                                print(f"Attempt {attempt + 1} failed with OSError: {os_err}")
                                 last_error = os_err
                                 if attempt < max_retries - 1:
-                                    print("Retrying after OSError...")
                                     continue
                             except Exception as e:
-                                print(f"Attempt {attempt + 1} failed with error: {repr(e)}")
                                 last_error = e
                                 if attempt < max_retries - 1:
                                     continue
@@ -193,23 +175,18 @@ class API:
                             del driver
                             gc.collect()
 
-                    print(f"CRITICAL: Failed to sync on all interfaces. Last error: {last_error}")
-                    import traceback
                     if last_error:
-                        traceback.print_exception(type(last_error), last_error, last_error.__traceback__)
+                        print(f"Device sync failed on all interfaces. Last error: {last_error}")
 
                 else:
                     print("No Abbott device detected during sync attempt.")
             except ImportError as imp_err:
                 print(f"Module Import Error: {imp_err}")
             except Exception as e:
-                print(f"CRITICAL: Device connection/sync setup failed: {e}")
-                import traceback
-                traceback.print_exc()
+                print(f"Device connection/sync setup failed: {e}")
 
             # 2. Fallback to mock if available
             if HAS_MOCK:
-                print("Falling back to Mock readings...")
                 driver = MockDriver()
                 exporter = Exporter(driver)
                 readings = exporter.fetch_all_readings()
@@ -275,13 +252,9 @@ def main():
     for loc in locations:
         if os.path.exists(loc):
             index_path = loc
-            print(f"Found assets at: {index_path}")
             break
             
     if not index_path:
-        print("Error: index.html not found in searched locations:")
-        for loc in locations:
-            print(f"  - {loc}")
         # Last resort fallback (might fail if CWD is wrong)
         index_path = "assets/index.html"
     
@@ -293,7 +266,7 @@ def main():
         height=800
     )
     
-    webview.start(debug=True)
+    webview.start(debug=False)
 
 if __name__ == '__main__':
     main()
