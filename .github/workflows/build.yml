@@ -1,9 +1,8 @@
 name: Build and Package Windows
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -15,7 +14,7 @@ jobs:
         shell: bash
     permissions:
       id-token: write
-      contents: read
+      contents: write
       attestations: write
 
     steps:
@@ -37,8 +36,8 @@ jobs:
       - name: Get Version
         id: vars
         run: |
-          # Use --abbrev=0 to get only the tag name, and fallback to v0.0.0 if no tags exist
-          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          # Use the tag that triggered the workflow
+          TAG=${GITHUB_REF#refs/tags/}
           VERSION=${TAG#v}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
@@ -61,7 +60,7 @@ jobs:
         with:
           subject-path: 'dist/*'
 
-      - name: Upload Artifact
+      - name: Upload Artifact to Action
         uses: actions/upload-artifact@v4
         with:
           name: Windows-package
@@ -69,3 +68,12 @@ jobs:
             dist/*.msi
             dist/*.exe
             dist/*.zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.msi
+            dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
