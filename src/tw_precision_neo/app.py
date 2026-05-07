@@ -258,6 +258,18 @@ def main():
         # Last resort fallback (might fail if CWD is wrong)
         index_path = "assets/index.html"
     
+    # App icon path
+    icon_path = None
+    if platform.system() == "Darwin":
+        icns_path = os.path.join(current_dir, "resources", "tw_precision_neo.icns")
+        if os.path.exists(icns_path):
+            icon_path = icns_path
+    
+    if not icon_path:
+        png_path = os.path.join(current_dir, "resources", "tw_precision_neo.png")
+        if os.path.exists(png_path):
+            icon_path = png_path
+
     window = webview.create_window(
         'TW Precision Neo Analyst',
         index_path,
@@ -266,7 +278,7 @@ def main():
         height=800
     )
     
-    webview.start(debug=False)
+    webview.start(debug=False, icon=icon_path)
 
 if __name__ == '__main__':
     main()

@@ -11,6 +11,7 @@ author_email = "user@example.com"
 [tool.briefcase.app.tw_precision_neo]
 formal_name = "TW Precision Neo Analyst"
 description = "FreeStyle Precision Neo Trend Discovery"
+icon = "src/tw_precision_neo/resources/tw_precision_neo"
 long_description = """More details about the app should go here.
 """
 sources = [
