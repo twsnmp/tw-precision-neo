@@ -1,10 +1,11 @@
 # This project was generated with 0.3.24 using template: https://github.com/beeware/briefcase-template @ v0.3.24
 [tool.briefcase]
 project_name = "TW Precision Neo Analyst"
-bundle = "jp.co.twise.tw_precision_neo"
+bundle = "jp.co.twise.tw-precision-neo"
 version = "0.0.1"
 url = "https://github.com/twsnmp/tw-precision-neo"
-license.file = "LICENSE"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 author = "Mssayuki Yamai"
 author_email = "twsnmp@gmail.com"
 
