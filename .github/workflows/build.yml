@@ -44,16 +44,16 @@ jobs:
 
       - name: Create and Build App
         run: |
-          briefcase create windows --no-input -C version=\"${{ steps.vars.outputs.VERSION }}\"
-          briefcase build windows --no-input -C version=\"${{ steps.vars.outputs.VERSION }}\"
+          briefcase create windows --no-input -C "version=\\"${{ steps.vars.outputs.VERSION }}\\""
+          briefcase build windows --no-input -C "version=\\"${{ steps.vars.outputs.VERSION }}\\""
 
       - name: Package (MSI)
         run: |
-          briefcase package windows -p msi --no-input -C version=\"${{ steps.vars.outputs.VERSION }}\"
+          briefcase package windows -p msi --no-input -C "version=\\"${{ steps.vars.outputs.VERSION }}\\""
 
       - name: Package (ZIP)
         run: |
-          briefcase package windows -p zip --no-input -C version=\"${{ steps.vars.outputs.VERSION }}\"
+          briefcase package windows -p zip --no-input -C "version=\\"${{ steps.vars.outputs.VERSION }}\\""
 
       - name: Attest Build Provenance
         uses: actions/attest-build-provenance@v2
