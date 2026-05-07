@@ -1,9 +1,11 @@
 let glucoseChart = null;
+let statsChart = null;
 let readingsTable = null;
 let allReadings = []; // Global store for original data
 
 const translations = {
     en: {
+        stats_btn: "Stats",
         sync_btn: "Sync Device",
         export_btn: "Export CSV",
         status_ready: "Ready",
@@ -22,9 +24,18 @@ const translations = {
         range_high: "High",
         range_very_high: "Very High",
         range_unknown: "Unknown",
-        series_name: "Glucose Level"
+        series_name: "Glucose Level",
+        stats_title: "Blood Glucose Statistics",
+        stats_series: "Reading Count",
+        lbl_max: "Max",
+        lbl_min: "Min",
+        lbl_avg: "Average",
+        lbl_median: "Median",
+        lbl_stddev: "Std Dev",
+        lbl_count: "Count"
     },
     ja: {
+        stats_btn: "統計",
         sync_btn: "デバイス同期",
         export_btn: "CSV出力",
         status_ready: "準備完了",
@@ -43,7 +54,15 @@ const translations = {
         range_high: "高血糖",
         range_very_high: "非常に高い",
         range_unknown: "不明",
-        series_name: "血糖値"
+        series_name: "血糖値",
+        stats_title: "血糖値統計 (範囲別)",
+        stats_series: "測定回数",
+        lbl_max: "最大値",
+        lbl_min: "最小値",
+        lbl_avg: "平均値",
+        lbl_median: "中央値",
+        lbl_stddev: "標準偏差",
+        lbl_count: "測定数"
     }
 };
 
@@ -71,6 +90,9 @@ function changeLanguage(lang) {
 
 function updateStaticText() {
     const t = translations[currentLanguage];
+    const statsBtn = document.getElementById('stats-btn');
+    if (statsBtn) statsBtn.innerText = t.stats_btn;
+
     const syncBtn = document.getElementById('sync-btn');
     if (syncBtn) syncBtn.innerText = t.sync_btn;
     
@@ -79,6 +101,9 @@ function updateStaticText() {
     
     const chartTitle = document.getElementById('chart-title');
     if (chartTitle) chartTitle.innerText = t.chart_title;
+
+    const statsTitle = document.getElementById('stats-title');
+    if (statsTitle) statsTitle.innerText = t.stats_title;
     
     const tableTitle = document.getElementById('table-title');
     if (tableTitle) tableTitle.innerText = t.table_title;
@@ -91,6 +116,13 @@ function updateStaticText() {
     
     const thUnit = document.getElementById('th-unit');
     if (thUnit) thUnit.innerText = t.th_unit;
+
+    // Detailed stats labels
+    const lbls = ['max', 'min', 'avg', 'median', 'stddev', 'count'];
+    lbls.forEach(l => {
+        const el = document.getElementById(`lbl-${l}`);
+        if (el) el.innerText = t[`lbl_${l}`];
+    });
     
     const statusEl = document.getElementById('status');
     if (statusEl) {
@@ -155,6 +187,8 @@ function updateStatus(msg) {
 }
 
 function setButtonsDisabled(disabled) {
+    const statsBtn = document.getElementById('stats-btn');
+    if (statsBtn) statsBtn.disabled = disabled;
     const syncBtn = document.getElementById('sync-btn');
     if (syncBtn) syncBtn.disabled = disabled;
     const exportBtn = document.getElementById('export-btn');
@@ -366,8 +400,157 @@ function renderChart(readings) {
     }, 0);
 }
 
+function showStats() {
+    const modal = document.getElementById('stats-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        renderStatsChart();
+    }
+}
+
+function hideStats() {
+    const modal = document.getElementById('stats-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+function renderStatsChart() {
+    const t = translations[currentLanguage];
+    const chartEl = document.getElementById('statsChart');
+    if (!chartEl) return;
+    
+    if (!statsChart) {
+        statsChart = echarts.init(chartEl, 'dark', { renderer: 'canvas' });
+    }
+
+    // Get currently visible data (respected by chart zoom and search filter)
+    let readingsToProcess = allReadings;
+    if (readingsTable) {
+        readingsToProcess = readingsTable.rows({ search: 'applied' }).data().toArray();
+    }
+
+    if (readingsToProcess.length === 0) {
+        // Reset values
+        const ids = ['max', 'min', 'avg', 'median', 'stddev', 'count'];
+        ids.forEach(id => {
+            const el = document.getElementById(`val-${id}`);
+            if (el) el.innerText = '--';
+        });
+        document.getElementById('time-max').innerText = '--';
+        document.getElementById('time-min').innerText = '--';
+        if (statsChart) statsChart.clear();
+        return;
+    }
+
+    // Aggregate range data for pie chart
+    const counts = { 'low': 0, 'target': 0, 'caution': 0, 'high': 0, 'very-high': 0 };
+    
+    // Descriptive stats
+    const values = readingsToProcess.map(r => r.value);
+    const unit = readingsToProcess[0].unit;
+    
+    let maxReading = readingsToProcess[0];
+    let minReading = readingsToProcess[0];
+    let sum = 0;
+
+    readingsToProcess.forEach(r => {
+        const range = getGlucoseRange(r.value, r.unit);
+        if (counts.hasOwnProperty(range)) counts[range]++;
+        
+        if (r.value > maxReading.value) maxReading = r;
+        if (r.value < minReading.value) minReading = r;
+        sum += r.value;
+    });
+
+    const avg = sum / readingsToProcess.length;
+    
+    // Median
+    const sortedValues = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sortedValues.length / 2);
+    const median = sortedValues.length % 2 !== 0 ? sortedValues[mid] : (sortedValues[mid - 1] + sortedValues[mid]) / 2;
+
+    // Standard Deviation
+    const squareDiffs = values.map(v => Math.pow(v - avg, 2));
+    const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / squareDiffs.length;
+    const stdDev = Math.sqrt(avgSquareDiff);
+
+    // Update UI
+    document.getElementById('val-max').innerText = `${maxReading.value.toFixed(1)} ${unit}`;
+    document.getElementById('time-max').innerText = formatDate(maxReading.timestamp);
+    
+    document.getElementById('val-min').innerText = `${minReading.value.toFixed(1)} ${unit}`;
+    document.getElementById('time-min').innerText = formatDate(minReading.timestamp);
+    
+    document.getElementById('val-avg').innerText = `${avg.toFixed(1)} ${unit}`;
+    document.getElementById('val-median').innerText = `${median.toFixed(1)} ${unit}`;
+    document.getElementById('val-stddev').innerText = `${stdDev.toFixed(1)} ${unit}`;
+    document.getElementById('val-count').innerText = readingsToProcess.length;
+
+    const pieData = Object.keys(counts).map(key => {
+        return {
+            name: getRangeLabel(key),
+            value: counts[key],
+            itemStyle: { color: getRangeColor(key) }
+        };
+    }).filter(d => d.value > 0);
+
+    const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: <b>{c}</b> ({d}%)'
+        },
+        legend: {
+            orient: 'vertical',
+            left: 'left',
+            textStyle: { color: '#c8c5ca' }
+        },
+        series: [
+            {
+                name: t.stats_series,
+                type: 'pie',
+                radius: '60%',
+                center: ['50%', '50%'],
+                data: pieData,
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                },
+                label: {
+                    show: true,
+                    color: '#c8c5ca',
+                    formatter: '{b}: {d}%'
+                }
+            }
+        ]
+    };
+
+    statsChart.setOption(option);
+    setTimeout(() => {
+        if (statsChart) statsChart.resize();
+    }, 0);
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('stats-modal');
+    if (event.target == modal) {
+        hideStats();
+    }
+}
+
 window.addEventListener('resize', () => {
     if (glucoseChart) glucoseChart.resize();
+    if (statsChart) statsChart.resize();
     if (readingsTable) {
         const newLen = getAppropriatePageLength();
         if (readingsTable.page.len() !== newLen) {

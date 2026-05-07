@@ -18,6 +18,7 @@
                 <option value="en">English</option>
                 <option value="ja">日本語</option>
             </select>
+            <button id="stats-btn" onclick="showStats()">Stats</button>
             <button id="sync-btn" onclick="syncDevice()">Sync Device</button>
             <button id="export-btn" onclick="exportCSV()">Export CSV</button>
             <span id="status">Ready</span>
@@ -47,6 +48,44 @@
             </table>
         </section>
     </main>
+
+    <div id="stats-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="stats-title">Blood Glucose Statistics</h2>
+                <span class="close-btn" onclick="hideStats()">&times;</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stats-item">
+                    <label id="lbl-max">Max</label>
+                    <div id="val-max" class="value">--</div>
+                    <div id="time-max" class="time">--</div>
+                </div>
+                <div class="stats-item">
+                    <label id="lbl-min">Min</label>
+                    <div id="val-min" class="value">--</div>
+                    <div id="time-min" class="time">--</div>
+                </div>
+                <div class="stats-item">
+                    <label id="lbl-avg">Average</label>
+                    <div id="val-avg" class="value">--</div>
+                </div>
+                <div class="stats-item">
+                    <label id="lbl-median">Median</label>
+                    <div id="val-median" class="value">--</div>
+                </div>
+                <div class="stats-item">
+                    <label id="lbl-stddev">Std Dev</label>
+                    <div id="val-stddev" class="value">--</div>
+                </div>
+                <div class="stats-item">
+                    <label id="lbl-count">Count</label>
+                    <div id="val-count" class="value">--</div>
+                </div>
+            </div>
+            <div id="statsChart"></div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
