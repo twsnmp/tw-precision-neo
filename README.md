@@ -24,6 +24,18 @@
 - **Abbott FreeStyle Precision Neo**
 - **Abbott FreeStyle Optium Neo**
 
+## 🩸 Blood Glucose Classifications
+
+The app categorizes readings based on the following criteria and displays them with corresponding colors:
+
+| Category | mg/dL | mmol/L | Color |
+| :--- | :--- | :--- | :--- |
+| **Low** | < 70 | < 3.9 | Red |
+| **In Range** | 70 - 140 | 3.9 - 7.8 | Green |
+| **High (Caution)** | 141 - 180 | 7.9 - 10.0 | Yellow |
+| **High** | 181 - 250 | 10.1 - 13.9 | Red |
+| **Very High** | > 250 | > 13.9 | Dark Red |
+
 ## 📦 Installation
 
 Download the latest version from the [GitHub Releases](https://github.com/twsnmp/tw-precision-neo/releases) page.
