@@ -2,67 +2,67 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Python-3.14+-blue.svg)](https://www.python.org/)
 
-**FreeStyle Precision Neo / Optium Neo ユーザーのための、現代的なデータ管理アプリ。**
+**Modern data management app for FreeStyle Precision Neo / Optium Neo users.**
 
-[English README is here](./README.md)
+[日本語の README はこちら](./README_ja.md)
 
-`tw-precision-neo` は、公式ソフト（FreeStyle Auto-Assist）が最新のOSで動作しなくなったことに困っているユーザーのために開発された、オープンソースのデスクトップアプリです。
+`tw-precision-neo` is an open-source desktop application developed for users who are frustrated that the official software (FreeStyle Auto-Assist) no longer runs on modern operating systems.
 
 ---
 
-## 🌟 主な特徴
+## 🌟 Key Features
 
-- **最新OS対応**: Apple Silicon (M1/M2/M3) Mac および Windows 11 に完全対応しています。
-- **プライバシー重視**: 血糖データはクラウドには送信されず、あなたのPC内のローカルデータベース (SQLite) にのみ保存されます。
-- **単位の自動変換**: 日本国内で一般的な `mg/dL` と、海外で使われる `mmol/L` の両方に対応。
-- **インタラクティブな推移グラフ**: Chart.js を使用した、スムーズでズーム可能なグラフ表示。
-- **臨床指標の自動計算**: 目標範囲内時間 (TIR) を自動計算し、管理の質を可視化します。
-- **信頼の 'tw' シリーズ**: ネットワーク管理ツール「TWSNMP」シリーズの開発者による、透明性の高いプロジェクトです。
+- **Modern OS Support**: Fully compatible with Apple Silicon (M1/M2/M3) Mac and Windows 11.
+- **Privacy First**: Blood glucose data is never sent to the cloud; it is stored only in a local database (SQLite) on your computer.
+- **Auto Unit Conversion**: Supports both `mg/dL` (common in Japan/US) and `mmol/L` (common internationally).
+- **Interactive Trend Charts**: Smooth, zoomable visualizations powered by ECharts.
+- **Clinical Metrics**: Automatically calculates Time in Range (TIR) and other management indicators.
+- **Trusted 'tw' Series**: A highly transparent project by the developer of the "TWSNMP" network management series.
 
-## 📱 対応デバイス
+## 📱 Supported Devices
 
-- **Abbott FreeStyle Precision Neo** (日本国内で一般的)
-- **Abbott FreeStyle Optium Neo** (海外で一般的)
+- **Abbott FreeStyle Precision Neo**
+- **Abbott FreeStyle Optium Neo**
 
-## 📦 インストール方法
+## 📦 Installation
 
-### macOS (推奨)
-[Homebrew](https://brew.sh/) 経由でインストールできます：
+### macOS (Recommended)
+You can install via [Homebrew](https://brew.sh/):
 ```bash
 brew tap twsnmp/homebrew-taps
 brew install --cask tw-precision-neo
 ```
-*注意: アプリは Apple による公証(Notarized)を受けており、安全に実行できます。*
+*Note: The app is Notarized by Apple and safe to run.*
 
 ### Windows
-- **Scoop を使う**:
+- **Using Scoop**:
   ```powershell
   scoop bucket add twsnmp https://github.com/twsnmp/scoop-bucket
   scoop install tw-precision-neo
   ```
-- **手動インストール**: [GitHub Releases](https://github.com/twsnmp/tw-precision-neo/releases) ページから最新の `.msi` または `.zip` をダウンロードしてください。
+- **Manual Install**: Download the latest `.msi` or `.zip` from the [GitHub Releases](https://github.com/twsnmp/tw-precision-neo/releases) page.
 
-## 🚀 使い方
+## 🚀 Usage
 
-1.  **接続**: お手持ちの Precision Neo を標準の Micro-USB ケーブルで PC に接続します。
-2.  **同期**: アプリを起動し、**"Sync Device"** ボタンをクリックします。
-3.  **分析**: 取得されたデータと推移グラフをすぐに確認できます。
+1.  **Connect**: Connect your Precision Neo to your PC using a standard Micro-USB cable.
+2.  **Sync**: Launch the app and click the **"Sync Device"** button.
+3.  **Analyze**: Instantly view your synced data and trend charts.
 
-## 💾 データの保存場所
+## 💾 Data Storage
 
-すべてのデータは、お使いの PC 内のローカル SQLite データベースに保存されます。ファイルは以下の場所にあります：
+All data is stored in a local SQLite database on your PC. Files are located at:
 
 - **macOS**: `~/Library/Application Support/tw_precision_neo/tw_precision_neo.db`
 - **Windows**: `%LOCALAPPDATA%\tw_precision_neo\tw_precision_neo.db`
 
-## 📸 スクリーンショット
+## 📸 Screenshots
 
-*(プレースホルダー: ここにダッシュボードのスクリーンショットを追加)*
+*(Placeholder: Add dashboard screenshots here)*
 
-## ⚠️ 免責事項
+## ⚠️ Disclaimer
 
-**本ソフトウェアは「プログラム医療機器（SaMD）」ではありません。**
-個人のログ管理および情報参照のみを目的としています。本ソフトが提供する情報を、インスリン投与量の調整など治療に関する決定に使用しないでください。治療に関する決定は、必ず主治医の診断と指導に基づいて行ってください。
+**This software is NOT a "Software as a Medical Device" (SaMD).**
+It is intended for personal logging and informational purposes only. Do not use the information provided by this software for medical decisions, such as adjusting insulin doses. Always consult with your physician for medical guidance.
 
 ## 🛠 For Developers
 
@@ -82,14 +82,13 @@ mise run setup
 
 ### Release & Packaging
 - **macOS (Signed & Notarized)**:
-  For security, code signing is performed locally on your Mac.
-  If the `DELELOPER_ID_APPLICATION` environment variable is set, it will be used; otherwise, a selection list will be displayed at runtime.
+  Signing is performed locally. If the `DEVELOPER_ID_APPLICATION` environment variable is set, it will be used.
   ```bash
   mise run release-mac
   ```
 - **Windows**:
-  Pushing to GitHub triggers **GitHub Actions**, which automatically builds and generates the `.msi` installer.
+  Pushing to GitHub triggers **GitHub Actions**, which automatically builds the `.msi` installer.
 
-## 📄 ライセンス
+## 📄 License
 
-**Apache License 2.0** の下で公開されています。詳細は [LICENSE](LICENSE) を参照してください。
+Distributed under the **Apache License 2.0**. See [LICENSE](LICENSE) for details.

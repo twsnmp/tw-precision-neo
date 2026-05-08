@@ -1,12 +1,13 @@
 # Plan: TW Precision Neo Analyst Development
 
 ## Overview
-This plan outlines the transition from a native Toga-based UI to a modern web-based UI using `pywebview` while maintaining the core logic and packaging workflow.
+This plan outlines the development of a modern, privacy-first desktop application for FreeStyle Precision Neo users, transitioning to a web-based UI (`pywebview`) while ensuring robust packaging and distribution.
 
 ## Strategic Direction
-1.  **UI Modernization**: Leverage HTML/JS/CSS for a richer, more responsive user experience.
-2.  **Environment Stability**: Use `mise` to ensure consistent Python versions across development environments.
-3.  **Cross-Platform Packaging**: Continue using `briefcase` to bundle the webview app as a native executable.
+1.  **UI Modernization**: Leverage HTML/JS/CSS (ECharts, DataTables) for a richer, more responsive user experience.
+2.  **Environment Stability**: Use `mise` to ensure consistent Python 3.14+ versions and task automation.
+3.  **Cross-Platform Packaging**: Use `briefcase` to bundle the app as native executables (APP on macOS, MSI on Windows).
+4.  **Robust Release Process**: Automate Windows builds via GitHub Actions and ensure PEP 440 compliance and safe shell quoting for all platforms.
 
 ## Milestone Status
 
@@ -18,11 +19,12 @@ This plan outlines the transition from a native Toga-based UI to a modern web-ba
 ### Phase 2: Core Engine (Completed)
 - [x] Device communication via `freestyle-hid`.
 - [x] Local persistence with SQLite.
-- [x] Analysis engine for clinical metrics (TIR).
+- [x] Clinical metrics calculation for glucose data.
 
 ### Phase 3: Web-Based GUI (Completed)
 - [x] `pywebview` implementation with JS bridge.
-- [x] Chart.js integration for time-series data.
+- [x] ECharts integration for high-performance time-series data visualization.
+- [x] DataTables integration for detailed logs.
 - [x] Responsive layout for data dashboard.
 
 ### Phase 4: Verification & Build (Completed)
@@ -32,4 +34,6 @@ This plan outlines the transition from a native Toga-based UI to a modern web-ba
 
 ### Phase 5: Distribution (Completed)
 - [x] Final packaging for release.
+- [x] GitHub Actions workflow for Windows MSI builds.
+- [x] PEP 440 compliant versioning and cross-platform shell quoting fixes.
 - [x] Deployment documentation.

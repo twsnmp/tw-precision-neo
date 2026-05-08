@@ -8,7 +8,7 @@ Create a privacy-first desktop application using `pywebview` to extract blood gl
 - **Language:** Python 3.14+
 - **GUI Framework:** [pywebview](https://pywebview.flowrl.com/) for a native-like webview experience.
 - **Frontend:** HTML5, CSS3, JavaScript (Vanilla).
-- **Charts:** [Chart.js](https://www.chartjs.org/) for interactive visualizations.
+- **Charts:** [ECharts](https://echarts.apache.org/) for high-performance interactive visualizations.
 - **Backend Libraries:** 
   - `glucometerutils` (via GitHub) & `freestyle-hid`: Device interaction.
   - `pandas`: Data analysis.
@@ -20,7 +20,7 @@ Create a privacy-first desktop application using `pywebview` to extract blood gl
 
 ## Key Features
 - **Web UI:** Modern, responsive interface built with HTML/CSS.
-- **Interactive Dashboards:** Zoomable, hoverable charts for glucose trends using Chart.js.
+- **Interactive Dashboards:** High-performance charts for glucose trends using ECharts.
 - **Local API:** Python backend serving data to the frontend via pywebview's JS bridge.
 - **Privacy First:** Strictly local storage in SQLite; no cloud sync. Data is stored at:
   - macOS: `~/Library/Application Support/tw_precision_neo/tw_precision_neo.db`
@@ -33,3 +33,4 @@ Create a privacy-first desktop application using `pywebview` to extract blood gl
 - [x] Maintains strict local-only data privacy.
 - [x] Processes large datasets (50,000+ readings) with sub-second responsiveness.
 - [x] Packaged as a native application using Briefcase.
+- [x] Versioning and packaging follow PEP 440 and support cross-platform quoting.
