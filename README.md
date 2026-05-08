@@ -26,21 +26,14 @@
 
 ## 📦 Installation
 
-### macOS (Recommended)
-You can install via [Homebrew](https://brew.sh/):
-```bash
-brew tap twsnmp/homebrew-taps
-brew install --cask tw-precision-neo
-```
+Download the latest version from the [GitHub Releases](https://github.com/twsnmp/tw-precision-neo/releases) page.
+
+### macOS
+Download and run the `.pkg` installer.
 *Note: The app is Notarized by Apple and safe to run.*
 
 ### Windows
-- **Using Scoop**:
-  ```powershell
-  scoop bucket add twsnmp https://github.com/twsnmp/scoop-bucket
-  scoop install tw-precision-neo
-  ```
-- **Manual Install**: Download the latest `.msi` or `.zip` from the [GitHub Releases](https://github.com/twsnmp/tw-precision-neo/releases) page.
+Download and run the `.msi` installer, or download the `.zip` file and extract it to a folder of your choice.
 
 ## 🚀 Usage
 

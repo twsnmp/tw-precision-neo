@@ -26,21 +26,14 @@
 
 ## 📦 インストール方法
 
-### macOS (推奨)
-[Homebrew](https://brew.sh/) 経由でインストールできます：
-```bash
-brew tap twsnmp/homebrew-taps
-brew install --cask tw-precision-neo
-```
+最新バージョンを [GitHub Releases](https://github.com/twsnmp/tw-precision-neo/releases) ページからダウンロードしてください。
+
+### macOS
+`.pkg` インストーラーをダウンロードして実行してください。
 *注意: アプリは Apple による公証(Notarized)を受けており、安全に実行できます。*
 
 ### Windows
-- **Scoop を使う**:
-  ```powershell
-  scoop bucket add twsnmp https://github.com/twsnmp/scoop-bucket
-  scoop install tw-precision-neo
-  ```
-- **手動インストール**: [GitHub Releases](https://github.com/twsnmp/tw-precision-neo/releases) ページから最新の `.msi` または `.zip` をダウンロードしてください。
+`.msi` インストーラーをダウンロードして実行するか、`.zip` ファイルをダウンロードして任意のフォルダに解凍してください。
 
 ## 🚀 使い方
 
@@ -50,7 +43,7 @@ brew install --cask tw-precision-neo
 
 ## 💾 データの保存場所
 
-すべてのデータは、お使いの PC 内のローカル SQLite データベースに保存されます。ファイルは以下の場所にあります：
+すべてのデータは、お使い of PC 内のローカル SQLite データベースに保存されます。ファイルは以下の場所にあります：
 
 - **macOS**: `~/Library/Application Support/tw_precision_neo/tw_precision_neo.db`
 - **Windows**: `%LOCALAPPDATA%\tw_precision_neo\tw_precision_neo.db`
