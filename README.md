@@ -37,7 +37,8 @@ Download and run the `.msi` installer, or download the `.zip` file and extract i
 
 ## 🚀 Usage
 
-1.  **Connect**: Connect your Precision Neo to your PC using a standard Micro-USB cable.
+1.  **Connect**: Connect your Precision Neo to your PC using a standard Micro-USB cable. Ensure the device screen displays **"PC"**.
+    ![Device Connection](images/device.png)
 2.  **Sync**: Launch the app and click the **"Sync Device"** button.
 3.  **Analyze**: Instantly view your synced data and trend charts.
 
