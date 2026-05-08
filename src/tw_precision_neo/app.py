@@ -17,6 +17,14 @@ try:
 except ImportError:
     HAS_MOCK = False
 
+# Pre-load HID on the main thread to prevent macOS exit crashes.
+# cython-hidapi initializes IOHIDManager on import. If imported first
+# on a background thread (like pywebview's JS API), it crashes on exit.
+try:
+    import hid
+except ImportError:
+    pass
+
 class API:
     def __init__(self, storage):
         self.storage = storage
