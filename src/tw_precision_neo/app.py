@@ -62,17 +62,16 @@ class API:
                         
                         @staticmethod
                         def patched_open(device_path, vendor_id, product_id):
-                            if platform.system() == "Windows":
-                                inst = freestyle_hid._hidwrapper.HidApi.__new__(freestyle_hid._hidwrapper.HidApi)
-                                inst._handle = hid.device()
-                                if device_path:
-                                    dp_bytes = str(device_path).encode('utf-8')
-                                    inst._handle.open_path(dp_bytes)
-                                else:
-                                    inst._handle.open(vendor_id, product_id)
-                                return inst
+                            # freestyle-hid incorrectly assumes device_path means Linux HidRaw.
+                            # We use cython-hidapi with open_path for all platforms instead.
+                            inst = freestyle_hid._hidwrapper.HidApi.__new__(freestyle_hid._hidwrapper.HidApi)
+                            inst._handle = hid.device()
+                            if device_path:
+                                dp_bytes = str(device_path).encode('utf-8')
+                                inst._handle.open_path(dp_bytes)
                             else:
-                                return freestyle_hid._hidwrapper.HidWrapper._original_open(device_path, vendor_id, product_id)
+                                inst._handle.open(vendor_id, product_id)
+                            return inst
                                 
                         freestyle_hid._hidwrapper.HidWrapper.open = patched_open
 
@@ -116,6 +115,19 @@ class API:
 
                 if target_paths:
                     last_error = None
+                    
+                    def safe_cleanup(drv):
+                        if not drv:
+                            return
+                        try:
+                            if hasattr(drv, '_session') and hasattr(drv._session, '_handle'):
+                                wrapper = drv._session._handle
+                                if hasattr(wrapper, '_handle') and hasattr(wrapper._handle, 'close'):
+                                    wrapper._handle.close()
+                            drv.disconnect()
+                        except Exception:
+                            pass
+
                     # Try each interface. Some Abbott devices expose multiple HID interfaces
                     # and only one responds to commands.
                     for path_bytes, device_info in target_paths:
@@ -128,10 +140,7 @@ class API:
                         for attempt in range(max_retries):
                             try:
                                 if driver:
-                                    try:
-                                        driver.disconnect()
-                                    except Exception:
-                                        pass
+                                    safe_cleanup(driver)
                                     del driver
                                     driver = None
                                     gc.collect()
@@ -149,10 +158,10 @@ class API:
                                 
                                 count = self.storage.save_readings(readings)
                                 
-                                try:
-                                    driver.disconnect()
-                                except Exception:
-                                    pass
+                                safe_cleanup(driver)
+                                del driver
+                                driver = None
+                                gc.collect()
                                     
                                 return {"message": f"Synced {count} new readings from device ({device_info.get('product_string', 'Neo')})."}
                             
@@ -167,10 +176,7 @@ class API:
                                 
                         # If we exhausted retries for this interface, clean up and try the next one
                         if 'driver' in locals() and driver:
-                            try:
-                                driver.disconnect()
-                            except Exception:
-                                pass
+                            safe_cleanup(driver)
                             del driver
                             gc.collect()
 
