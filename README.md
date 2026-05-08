@@ -55,9 +55,18 @@ All data is stored in a local SQLite database on your PC. Files are located at:
 - **macOS**: `~/Library/Application Support/tw_precision_neo/tw_precision_neo.db`
 - **Windows**: `%LOCALAPPDATA%\tw_precision_neo\tw_precision_neo.db`
 
-## 📸 Screenshots
+## 📸 Demo & Screenshots
 
-*(Placeholder: Add dashboard screenshots here)*
+### Video Demo
+<video src="images/tw-precision-neo-en.mp4" width="800" controls></video>
+
+### Dashboard & Analytics
+| Glucose Trends | Heatmap Analysis |
+| :---: | :---: |
+| ![Glucose Trends](images/time-en.png) | ![Heatmap](images/heatmap-en.png) |
+
+### Clinical Statistics
+![Statistics](images/stats-en.png)
 
 ## ⚠️ Disclaimer
 

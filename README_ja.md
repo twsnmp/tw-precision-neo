@@ -15,7 +15,7 @@
 - **最新OS対応**: Apple Silicon (M1/M2/M3) Mac および Windows 11 に完全対応しています。
 - **プライバシー重視**: 血糖データはクラウドには送信されず、あなたのPC内のローカルデータベース (SQLite) にのみ保存されます。
 - **単位の自動変換**: 日本国内で一般的な `mg/dL` と、海外で使われる `mmol/L` の両方に対応。
-- **インタラクティブな推移グラフ**: Chart.js を使用した、スムーズでズーム可能なグラフ表示。
+- **インタラクティブな推移グラフ**: ECharts を使用した、スムーズでズーム可能なグラフ表示。
 - **臨床指標の自動計算**: 目標範囲内時間 (TIR) を自動計算し、管理の質を可視化します。
 - **信頼の 'tw' シリーズ**: ネットワーク管理ツール「TWSNMP」シリーズの開発者による、透明性の高いプロジェクトです。
 
@@ -55,9 +55,18 @@ brew install --cask tw-precision-neo
 - **macOS**: `~/Library/Application Support/tw_precision_neo/tw_precision_neo.db`
 - **Windows**: `%LOCALAPPDATA%\tw_precision_neo\tw_precision_neo.db`
 
-## 📸 スクリーンショット
+## 📸 デモ & スクリーンショット
 
-*(プレースホルダー: ここにダッシュボードのスクリーンショットを追加)*
+### 動画デモ
+<video src="images/tw-precision-neo-ja.mp4" width="800" controls></video>
+
+### ダッシュボード & 分析
+| 血糖値推移 | ヒートマップ分析 |
+| :---: | :---: |
+| ![血糖値推移](images/time.-ja.png) | ![ヒートマップ](images/heatmap-ja.png) |
+
+### 統計情報
+![統計情報](images/stats-ja.png)
 
 ## ⚠️ 免責事項
 
