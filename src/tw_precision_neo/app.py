@@ -88,16 +88,17 @@ class API:
                         
                         @staticmethod
                         def patched_open(device_path, vendor_id, product_id):
-                            # freestyle-hid incorrectly assumes device_path means Linux HidRaw.
-                            # We use cython-hidapi with open_path for all platforms instead.
-                            inst = freestyle_hid._hidwrapper.HidApi.__new__(freestyle_hid._hidwrapper.HidApi)
-                            inst._handle = hid.device()
-                            if device_path:
-                                dp_bytes = str(device_path).encode('utf-8')
-                                inst._handle.open_path(dp_bytes)
+                            if platform.system() == "Windows":
+                                inst = freestyle_hid._hidwrapper.HidApi.__new__(freestyle_hid._hidwrapper.HidApi)
+                                inst._handle = hid.device()
+                                if device_path:
+                                    dp_bytes = str(device_path).encode('utf-8')
+                                    inst._handle.open_path(dp_bytes)
+                                else:
+                                    inst._handle.open(vendor_id, product_id)
+                                return inst
                             else:
-                                inst._handle.open(vendor_id, product_id)
-                            return inst
+                                return freestyle_hid._hidwrapper.HidWrapper._original_open(device_path, vendor_id, product_id)
                                 
                         freestyle_hid._hidwrapper.HidWrapper.open = patched_open
 
