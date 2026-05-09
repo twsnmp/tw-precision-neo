@@ -1,5 +1,22 @@
-import webview
+import sys
 import os
+
+# Fix for Windows Briefcase MSI deployment: ensure DLLs can be loaded
+if sys.platform == 'win32':
+    try:
+        if hasattr(os, 'add_dll_directory'):
+            # Add the directory containing the executable (and python3.dll)
+            exe_dir = os.path.dirname(sys.executable)
+            os.add_dll_directory(exe_dir)
+            
+            # Add the app_packages directory
+            for p in sys.path:
+                if p.endswith('app_packages'):
+                    os.add_dll_directory(p)
+    except Exception:
+        pass
+
+import webview
 import json
 import pandas as pd
 import platform

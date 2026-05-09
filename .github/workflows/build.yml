@@ -51,10 +51,6 @@ jobs:
         run: |
           briefcase package windows -p msi --no-input -C 'version="${{ steps.vars.outputs.VERSION }}"'
 
-      - name: Package (ZIP)
-        run: |
-          briefcase package windows -p zip --no-input -C 'version="${{ steps.vars.outputs.VERSION }}"'
-
       - name: Attest Build Provenance
         uses: actions/attest-build-provenance@v2
         with:
@@ -67,13 +63,11 @@ jobs:
           path: |
             dist/*.msi
             dist/*.exe
-            dist/*.zip
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/*.msi
-            dist/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
