@@ -25,6 +25,7 @@ VERSION=${VERSION#v}
 if [[ ! "$VERSION" =~ ^[0-9] ]]; then
     VERSION="0.0.0+$VERSION"
 fi
+chmod -R a+rX src/ tests/
 .venv/bin/briefcase build -C "version=\\"$VERSION\\""
 """
 
@@ -43,6 +44,9 @@ VERSION=${VERSION#v}
 if [[ ! "$VERSION" =~ ^[0-9] ]]; then
     VERSION="0.0.0+$VERSION"
 fi
+
+echo "Fixing file permissions to prevent macOS installation read errors..."
+chmod -R a+rX src/ tests/
 
 echo "Building version $VERSION for macOS..."
 .venv/bin/briefcase build macOS --no-input -C "version=\\"$VERSION\\""
