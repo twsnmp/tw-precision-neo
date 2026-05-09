@@ -318,13 +318,10 @@ def main():
             height=800
         )
         
-        # Windows-specific stabilization:
-        # Disable explicit icon passing to avoid .NET crash.
-        # We can now set debug=False for a clean production experience.
-        if os.name == 'nt':
-            webview.start(debug=False)
-        else:
-            webview.start(debug=False, icon=icon_path)
+        # Stabilization:
+        # Disable explicit icon passing to avoid .NET crash on Windows and TypeError on macOS.
+        # We can set debug=False for a clean production experience.
+        webview.start(debug=False)
             
     except Exception as e:
         # Final emergency fallback logging
