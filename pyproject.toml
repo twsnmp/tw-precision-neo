@@ -6,7 +6,7 @@ version = "0.0.1"
 url = "https://github.com/twsnmp/tw-precision-neo"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-author = "Mssayuki Yamai"
+author = "TWSNMP"
 author_email = "twsnmp@gmail.com"
 
 [tool.briefcase.app.tw_precision_neo]
