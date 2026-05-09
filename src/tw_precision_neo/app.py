@@ -1,48 +1,72 @@
 import sys
 import os
 
+print("app.py: Starting top-level code...")
+
 # Fix for Windows Briefcase MSI deployment: ensure DLLs can be loaded
 if sys.platform == 'win32':
     try:
+        print("app.py: Setting up DLL directories...")
         if hasattr(os, 'add_dll_directory'):
             # Add the directory containing the executable (and python3.dll)
             exe_dir = os.path.dirname(sys.executable)
             os.add_dll_directory(exe_dir)
+            print(f"app.py: Added exe_dir to DLL path: {exe_dir}")
             
             # Add the app_packages directory
             for p in sys.path:
                 if p.endswith('app_packages'):
                     os.add_dll_directory(p)
-    except Exception:
-        pass
+                    print(f"app.py: Added app_packages to DLL path: {p}")
+    except Exception as e:
+        print(f"app.py: DLL setup warning: {e}")
 
-import webview
+print("app.py: Importing webview...")
+try:
+    import webview
+    print("app.py: webview imported.")
+except Exception as e:
+    print(f"app.py: webview import failed: {e}")
+    raise
+
+print("app.py: Importing json, pandas, platform...")
 import json
 import pandas as pd
 import platform
 import gc
 import traceback
 from datetime import datetime
+print("app.py: json, pandas, etc. imported.")
+
+print("app.py: Importing Exporter, SQLiteStorage...")
 from .exporter import Exporter
 from .storage import SQLiteStorage
 from . import __version__
+print("app.py: Local modules imported.")
 
 # Check for mock
+print("app.py: Checking for mock driver...")
 try:
     from .mock_driver import MockDriver
     HAS_MOCK = True
+    print("app.py: Mock driver found.")
 except ImportError:
     HAS_MOCK = False
+    print("app.py: Mock driver not found.")
 
 # Pre-load HID on the main thread to prevent macOS exit crashes.
-# cython-hidapi initializes IOHIDManager on import. If imported first
-# on a background thread (like pywebview's JS API), it crashes on exit.
+print("app.py: Importing hid...")
 try:
     import hid
-except ImportError:
+    print("app.py: hid imported.")
+except ImportError as e:
+    print(f"app.py: hid import failed (optional): {e}")
     pass
+except Exception as e:
+    print(f"app.py: hid import error: {e}")
 
 class API:
+# ... rest of class ...
     def __init__(self, storage):
         self.storage = storage
 
