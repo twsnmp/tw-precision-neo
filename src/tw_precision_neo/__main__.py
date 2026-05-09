@@ -3,6 +3,34 @@ import sys
 import traceback
 from datetime import datetime
 
+# --- EARLY LOGGING SETUP ---
+# Redirect stdout/stderr to a file immediately to capture all output/errors on Windows.
+def init_early_logging():
+    try:
+        if os.name == 'nt':
+            log_dir = os.path.join(os.environ.get('LOCALAPPDATA', '.'), "tw_precision_neo")
+        else:
+            log_dir = os.path.expanduser("~/Library/Application Support/tw_precision_neo")
+        
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = os.path.join(log_dir, "startup.log")
+        
+        # Open in line-buffered mode to ensure logs are written even on crash
+        f = open(log_path, "a", buffering=1, encoding="utf-8")
+        f.write(f"\n\n=== STARTUP AT {datetime.now()} ===\n")
+        sys.stdout = f
+        sys.stderr = f
+        print(f"Python Version: {sys.version}")
+        print(f"Platform: {sys.platform}")
+        print(f"Executable: {sys.executable}")
+        print(f"Environment: {os.environ.get('TW_DEBUG_HID', 'Normal')}")
+        return f
+    except Exception as e:
+        # If we can't even open the log file, we're in trouble, but let's not crash here
+        return None
+
+log_file_handle = init_early_logging()
+
 def run_diagnostics():
     print("--- TW Precision Neo HID Diagnostics ---")
     try:
@@ -27,32 +55,27 @@ def run_diagnostics():
                 print(f"{marker}VID: {hex(vid)}, PID: {hex(pid)} | {mfg} - {prod}")
     except Exception as e:
         print(f"Diagnostic Error: {e}")
+        traceback.print_exc()
     print("--- End of Diagnostics ---")
-    # Keep console open if run manually
-    input("Press Enter to exit...")
-
-def setup_crash_logging():
-    if os.name == 'nt':
-        log_dir = os.path.join(os.environ.get('LOCALAPPDATA', '.'), "tw_precision_neo")
-    else:
-        log_dir = os.path.expanduser("~/Library/Application Support/tw_precision_neo")
     
-    os.makedirs(log_dir, exist_ok=True)
-    return os.path.join(log_dir, "crash.log")
+    # If not redirected, wait for input
+    if sys.stdout.isatty():
+        input("Press Enter to exit...")
 
 if __name__ == '__main__':
-    if os.environ.get('TW_DEBUG_HID') == '1':
-        run_diagnostics()
-    else:
-        log_path = setup_crash_logging()
-        try:
+    try:
+        if os.environ.get('TW_DEBUG_HID') == '1':
+            run_diagnostics()
+        else:
+            print("Attempting to import main...")
             from .app import main
+            print("Import successful. Starting main()...")
             main()
-        except Exception:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(f"\n--- Crash at {datetime.now()} ---\n")
-                traceback.print_exc(file=f)
-                f.write("-" * 30 + "\n")
-            # Also try to print to stderr if a console is attached
-            traceback.print_exc()
-            sys.exit(1)
+    except Exception as e:
+        print(f"\n!!! CRITICAL ERROR DURING STARTUP !!!\n{e}")
+        traceback.print_exc()
+        sys.exit(1)
+    finally:
+        if log_file_handle:
+            print(f"=== TERMINATED AT {datetime.now()} ===")
+            log_file_handle.close()
