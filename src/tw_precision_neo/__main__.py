@@ -1,6 +1,7 @@
 import os
 import sys
-from .app import main
+import traceback
+from datetime import datetime
 
 def run_diagnostics():
     print("--- TW Precision Neo HID Diagnostics ---")
@@ -30,8 +31,28 @@ def run_diagnostics():
     # Keep console open if run manually
     input("Press Enter to exit...")
 
+def setup_crash_logging():
+    if os.name == 'nt':
+        log_dir = os.path.join(os.environ.get('LOCALAPPDATA', '.'), "tw_precision_neo")
+    else:
+        log_dir = os.path.expanduser("~/Library/Application Support/tw_precision_neo")
+    
+    os.makedirs(log_dir, exist_ok=True)
+    return os.path.join(log_dir, "crash.log")
+
 if __name__ == '__main__':
     if os.environ.get('TW_DEBUG_HID') == '1':
         run_diagnostics()
     else:
-        main()
+        log_path = setup_crash_logging()
+        try:
+            from .app import main
+            main()
+        except Exception:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(f"\n--- Crash at {datetime.now()} ---\n")
+                traceback.print_exc(file=f)
+                f.write("-" * 30 + "\n")
+            # Also try to print to stderr if a console is attached
+            traceback.print_exc()
+            sys.exit(1)
