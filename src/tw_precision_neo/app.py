@@ -314,10 +314,10 @@ def main():
         )
         
         # Windows-specific stabilization:
-        # 1. Disable explicit icon passing to avoid .NET crash
-        # 2. Keep debug=True for stable WinForms init sequence
+        # Disable explicit icon passing to avoid .NET crash.
+        # We can now set debug=False for a clean production experience.
         if os.name == 'nt':
-            webview.start(debug=True)
+            webview.start(debug=False)
         else:
             webview.start(debug=False, icon=icon_path)
             
