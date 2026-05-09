@@ -261,22 +261,28 @@ class API:
             return {"message": f"Failed to clear data: {e}"}
 
 def main():
+    print("Entering main()...")
     # Setup data directory
     if os.name == 'nt':
         data_dir = os.path.join(os.environ['LOCALAPPDATA'], "tw_precision_neo")
     else:
         data_dir = os.path.expanduser("~/Library/Application Support/tw_precision_neo")
         
+    print(f"Data directory: {data_dir}")
     os.makedirs(data_dir, exist_ok=True)
     db_path = os.path.join(data_dir, "tw_precision_neo.db")
-    storage = SQLiteStorage(db_path)
+    print(f"Database path: {db_path}")
+    
+    try:
+        storage = SQLiteStorage(db_path)
+        print("SQLite storage initialized.")
+    except Exception as e:
+        print(f"Failed to initialize storage: {e}")
+        raise
     
     api = API(storage)
     
     # Path to assets - checking multiple locations for flexibility
-    # 1. src/tw_precision_neo/assets/ (Preferred for both Dev and Prod now)
-    # 2. assets/ folder in the project root (Old development layout)
-    
     current_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(os.path.dirname(current_dir))
     
@@ -292,8 +298,9 @@ def main():
             break
             
     if not index_path:
-        # Last resort fallback (might fail if CWD is wrong)
         index_path = "assets/index.html"
+    
+    print(f"Index path: {index_path} (exists: {os.path.exists(index_path)})")
     
     # App icon path
     icon_path = None
@@ -306,16 +313,27 @@ def main():
         png_path = os.path.join(current_dir, "resources", "tw_precision_neo.png")
         if os.path.exists(png_path):
             icon_path = png_path
+            
+    print(f"Icon path: {icon_path}")
 
-    window = webview.create_window(
-        'TW Precision Neo Analyst',
-        index_path,
-        js_api=api,
-        width=1000,
-        height=800
-    )
-    
-    webview.start(debug=False, icon=icon_path)
+    try:
+        print("Creating webview window...")
+        window = webview.create_window(
+            'TW Precision Neo Analyst',
+            index_path,
+            js_api=api,
+            width=1000,
+            height=800
+        )
+        print("Webview window created.")
+        
+        print("Starting webview...")
+        webview.start(debug=False, icon=icon_path)
+        print("Webview closed.")
+    except Exception as e:
+        print(f"Webview error: {e}")
+        traceback.print_exc()
+        raise
 
 if __name__ == '__main__':
     main()
