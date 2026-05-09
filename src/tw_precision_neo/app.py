@@ -312,9 +312,17 @@ def main():
             width=1000,
             height=800
         )
-        webview.start(debug=False, icon=icon_path)
+        
+        # Windows-specific stabilization:
+        # 1. Disable explicit icon passing to avoid .NET crash
+        # 2. Keep debug=True for stable WinForms init sequence
+        if os.name == 'nt':
+            webview.start(debug=True)
+        else:
+            webview.start(debug=False, icon=icon_path)
+            
     except Exception as e:
-        # Final emergency fallback logging if even the main UI loop fails
+        # Final emergency fallback logging
         if os.name == 'nt':
             log_dir = os.path.join(os.environ.get('LOCALAPPDATA', '.'), "tw_precision_neo")
             os.makedirs(log_dir, exist_ok=True)
