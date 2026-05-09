@@ -1,69 +1,46 @@
 import sys
 import os
 
-print("app.py: Starting top-level code...")
-
 # Fix for Windows Briefcase MSI deployment: ensure DLLs can be loaded
 if sys.platform == 'win32':
     try:
-        print("app.py: Setting up DLL directories...")
         if hasattr(os, 'add_dll_directory'):
             # Add the directory containing the executable (and python3.dll)
             exe_dir = os.path.dirname(sys.executable)
             os.add_dll_directory(exe_dir)
-            print(f"app.py: Added exe_dir to DLL path: {exe_dir}")
             
             # Add the app_packages directory
             for p in sys.path:
                 if p.endswith('app_packages'):
                     os.add_dll_directory(p)
-                    print(f"app.py: Added app_packages to DLL path: {p}")
-    except Exception as e:
-        print(f"app.py: DLL setup warning: {e}")
+    except Exception:
+        pass
 
-print("app.py: Importing webview...")
-try:
-    import webview
-    print("app.py: webview imported.")
-except Exception as e:
-    print(f"app.py: webview import failed: {e}")
-    raise
-
-print("app.py: Importing json, pandas, platform...")
+import webview
 import json
 import pandas as pd
 import platform
 import gc
 import traceback
 from datetime import datetime
-print("app.py: json, pandas, etc. imported.")
-
-print("app.py: Importing Exporter, SQLiteStorage...")
 from .exporter import Exporter
 from .storage import SQLiteStorage
 from . import __version__
-print("app.py: Local modules imported.")
 
 # Check for mock
-print("app.py: Checking for mock driver...")
 try:
     from .mock_driver import MockDriver
     HAS_MOCK = True
-    print("app.py: Mock driver found.")
 except ImportError:
     HAS_MOCK = False
-    print("app.py: Mock driver not found.")
 
 # Pre-load HID on the main thread to prevent macOS exit crashes.
-print("app.py: Importing hid...")
+# cython-hidapi initializes IOHIDManager on import. If imported first
+# on a background thread (like pywebview's JS API), it crashes on exit.
 try:
     import hid
-    print("app.py: hid imported.")
-except ImportError as e:
-    print(f"app.py: hid import failed (optional): {e}")
+except ImportError:
     pass
-except Exception as e:
-    print(f"app.py: hid import error: {e}")
 
 class API:
 # ... rest of class ...
@@ -264,7 +241,7 @@ class API:
                 file_types=("CSV files (*.csv)", "All files (*.*)")
             )
             
-            if not save_path:
+            if not window or not save_path:
                 return {"message": "Export cancelled."}
             
             # Use the first path if it's a list (some platforms return lists)
@@ -285,24 +262,15 @@ class API:
             return {"message": f"Failed to clear data: {e}"}
 
 def main():
-    print("Entering main()...")
     # Setup data directory
     if os.name == 'nt':
         data_dir = os.path.join(os.environ['LOCALAPPDATA'], "tw_precision_neo")
     else:
         data_dir = os.path.expanduser("~/Library/Application Support/tw_precision_neo")
         
-    print(f"Data directory: {data_dir}")
     os.makedirs(data_dir, exist_ok=True)
     db_path = os.path.join(data_dir, "tw_precision_neo.db")
-    print(f"Database path: {db_path}")
-    
-    try:
-        storage = SQLiteStorage(db_path)
-        print("SQLite storage initialized.")
-    except Exception as e:
-        print(f"Failed to initialize storage: {e}")
-        raise
+    storage = SQLiteStorage(db_path)
     
     api = API(storage)
     
@@ -324,8 +292,6 @@ def main():
     if not index_path:
         index_path = "assets/index.html"
     
-    print(f"Index path: {index_path} (exists: {os.path.exists(index_path)})")
-    
     # App icon path
     icon_path = None
     if platform.system() == "Darwin":
@@ -338,19 +304,7 @@ def main():
         if os.path.exists(png_path):
             icon_path = png_path
             
-    print(f"Icon path: {icon_path}")
-
-    def heartbeat():
-        import time
-        while True:
-            time.sleep(5)
-            print(f"Heartbeat: App is alive at {datetime.now()}")
-
-    import threading
-    threading.Thread(target=heartbeat, daemon=True).start()
-
     try:
-        print("Creating webview window...")
         window = webview.create_window(
             'TW Precision Neo Analyst',
             index_path,
@@ -358,15 +312,15 @@ def main():
             width=1000,
             height=800
         )
-        print("Webview window created.")
-        
-        print("Starting webview (debug=True)...")
-        # Explicitly setting gui='edgechromium' can sometimes help on Windows
-        webview.start(debug=True)
-        print("Webview closed.")
+        webview.start(debug=False, icon=icon_path)
     except Exception as e:
-        print(f"Webview error: {e}")
-        traceback.print_exc()
+        # Final emergency fallback logging if even the main UI loop fails
+        if os.name == 'nt':
+            log_dir = os.path.join(os.environ.get('LOCALAPPDATA', '.'), "tw_precision_neo")
+            os.makedirs(log_dir, exist_ok=True)
+            with open(os.path.join(log_dir, "emergency.log"), "a", encoding="utf-8") as f:
+                f.write(f"Emergency UI Error: {e}\n")
+                traceback.print_exc(file=f)
         raise
 
 if __name__ == '__main__':
