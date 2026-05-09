@@ -155,6 +155,10 @@ class API:
                         except Exception:
                             pass
 
+                    # On macOS, path-based access is flaky. Discovery mode (passing None) is more reliable.
+                    if platform.system() == 'Darwin':
+                        target_paths = [(None, target_paths[0][1])]
+
                     # Try each interface. Some Abbott devices expose multiple HID interfaces
                     # and only one responds to commands.
                     for path_bytes, device_info in target_paths:
