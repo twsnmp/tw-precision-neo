@@ -340,6 +340,15 @@ def main():
             
     print(f"Icon path: {icon_path}")
 
+    def heartbeat():
+        import time
+        while True:
+            time.sleep(5)
+            print(f"Heartbeat: App is alive at {datetime.now()}")
+
+    import threading
+    threading.Thread(target=heartbeat, daemon=True).start()
+
     try:
         print("Creating webview window...")
         window = webview.create_window(
@@ -351,8 +360,9 @@ def main():
         )
         print("Webview window created.")
         
-        print("Starting webview...")
-        webview.start(debug=False, icon=icon_path)
+        print("Starting webview (debug=True)...")
+        # Explicitly setting gui='edgechromium' can sometimes help on Windows
+        webview.start(debug=True)
         print("Webview closed.")
     except Exception as e:
         print(f"Webview error: {e}")
